@@ -49,13 +49,13 @@ For each (image, question, answer), encode the image, embed the question, fuse v
 
 ### BLEU-4
 
-```
+```text
 BLEU-4 = BP * exp(mean(log p1, log p2, log p3, log p4))
 ```
 
 Where `p_n` is the modified n-gram precision (clipped count of generated n-grams that appear in any reference, divided by total generated n-grams), and `BP` is the brevity penalty:
 
-```
+```text
 BP = 1                if generated length > reference length
    = exp(1 - r/g)     otherwise, where r is reference length and g is generated
 ```
@@ -95,7 +95,7 @@ For a 50-step training run on synthetic data, the metrics are not expected to be
 
 Run it:
 
-```
+```bash
 python3 code/main.py
 ```
 
@@ -124,7 +124,7 @@ For real benchmarks, swap `build_eval_suite` for a real loader and keep the func
 
 Run them:
 
-```
+```bash
 python3 -m unittest code/test_main.py
 ```
 
