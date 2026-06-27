@@ -32,8 +32,8 @@ def main():
     with open(cards_file, "r", encoding="utf-8") as f:
         cards_data = json.load(f).get("cards", [])
 
-    if not (5 <= len(cards_data) <= 10):
-        print(f"FAIL: Expected 5-10 cards, found {len(cards_data)}.")
+    if not (5 <= len(cards_data) <= 20):
+        print(f"FAIL: Expected 5-20 cards, found {len(cards_data)}.")
         return 1
 
     with open(demo_lessons_file, "r", encoding="utf-8") as f:

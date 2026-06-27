@@ -7,6 +7,18 @@
     "05-nlp-foundations-to-advanced/01-text-processing",
     "07-transformers-deep-dive/01-why-transformers",
     "11-llm-engineering/01-prompt-engineering",
-    "11-llm-engineering/06-rag"
+    "11-llm-engineering/06-rag",
+    "00-setup-and-tooling/09-data-management",
+    "02-ml-fundamentals/09-model-evaluation",
+    "05-nlp-foundations-to-advanced/03-word-embeddings-word2vec",
+    "05-nlp-foundations-to-advanced/10-attention-mechanism",
+    "05-nlp-foundations-to-advanced/14-information-retrieval-search",
+    "05-nlp-foundations-to-advanced/19-subword-tokenization",
+    "05-nlp-foundations-to-advanced/22-embedding-models-deep-dive",
+    "11-llm-engineering/04-embeddings",
+    "11-llm-engineering/10-evaluation",
+    "14-agent-engineering/01-the-agent-loop",
+    "14-agent-engineering/06-tool-use-and-function-calling",
+    "14-agent-engineering/12-anthropic-workflow-patterns"
   ]
 }
