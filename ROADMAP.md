@@ -14,6 +14,23 @@ Total estimated time: ~314 hours, at your own pace.
 > only 40/485 lessons have docs, quiz, runnable code, and code/tests present.
 > Run py scripts/roadmap_completion_audit.py for the current evidence report.
 
+## AI Learning Companion MVP v0.1 — current state
+
+The companion app has reached MVP v0.1 as a local-first demo layer over the
+curriculum. It includes a static browser/local-server app, 8 reviewed non-tech
+demo cards, a lesson player, quiz flow, browser-local progress memory,
+Vietnamese placement test, 3 learning tracks, a track-aware dashboard, and a
+lexical/template Local Tutor backed by a 545-chunk local JSON index with
+citation/source display. Learner progress stays in localStorage and is not sent
+outside the browser.
+
+This is not a full 485-lesson companion. The curriculum index currently scans
+485 lessons, while the strict curriculum audit above records only 40/485 lessons
+with full lesson-contract evidence. Companion MVP v0.1 provides full non-tech
+card coverage for 8 demo lessons only. The Local Tutor is lexical/template
+search, not an AI chatbot, not an AI API integration, not real generative RAG,
+and not backed by a vector database, backend, auth, Docker, or external service.
+
 ## Phase 0: Setup & Tooling — ✅ (~14 hours)
 
 | # | Lesson | Status | Est. |

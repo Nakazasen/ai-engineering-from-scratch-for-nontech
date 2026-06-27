@@ -7,10 +7,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). Each ent
 ## [Unreleased]
 
 ### Added
+- AI Learning Companion MVP v0.1: local static app with 8 non-tech demo cards, lesson player, quiz/progress memory, placement test, 3 learning tracks, and a lexical Local Tutor with citation/source output.
 - `scripts/scaffold-lesson.sh` — scaffolder that creates `phases/NN-phase/NN-lesson/` with the full folder structure and a `docs/en.md` skeleton prefilled from `LESSON_TEMPLATE.md`.
 - `.github/PULL_REQUEST_TEMPLATE.md` — contributor checklist (code runs, no code comments, built-from-scratch-first, atomic per-lesson commit, markdown-link ROADMAP row).
 - `.github/ISSUE_TEMPLATE/bug_report.md` and `new_lesson_proposal.md` — structured intake for bug reports and lesson pitches.
 - This `CHANGELOG.md`.
+
+### Notes
+- AI Learning Companion MVP v0.1 is local-first: no AI API, backend, database, vector DB, Docker, auth, or external dependency.
+- MVP v0.1 does not scale non-tech cards to all 485 scanned lessons yet.
 
 ## 2026-04 — Phase 4: Computer Vision complete
 

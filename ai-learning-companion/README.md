@@ -73,8 +73,34 @@ Các file cấu hình Data mới:
 - `data/learning_tracks.json`: 3 lộ trình học và danh sách lesson ID tương ứng.
 - `data/local_tutor_index.demo.json`: Chỉ mục lexical local cho Gia sư local.
 
-## Giới hạn hiện tại
+## MVP v0.1 current state
 
-- Mới có 8 demo lessons được làm nội dung non-tech. Các learning track hiện cũng chỉ mapping vào 8 lesson này.
-- Local Tutor là tìm kiếm lexical + template answer, chưa phải RAG/LLM thật.
-- Hoàn toàn chưa tích hợp AI API (giữ an toàn, offline-first).
+### What is real
+
+- Static browser/local-server app.
+- 8 reviewed non-tech demo lesson cards.
+- Lesson player and quiz flow.
+- Browser-local progress memory via `localStorage` key `aiLearningCompanion.progress.v1`.
+- Vietnamese placement test and 3 learning tracks.
+- Track-aware dashboard.
+- Local Tutor using lexical/template search over local JSON with citations.
+- Local tutor index with 545 chunks.
+- Citation/source display for lesson cards and tutor answers.
+- Learner progress stays in the browser and is not sent outside the local app.
+
+### What is not implemented yet
+
+- No AI chatbot.
+- No AI API.
+- No backend/database/auth.
+- No vector DB.
+- No real generative RAG.
+- No full 485-lesson non-tech card coverage.
+- Local Tutor is lexical/template search, so answer quality depends on keyword overlap.
+
+### Known limitations
+
+- Full non-tech explanations exist only for the 8 demo lessons.
+- The curriculum index scans 485 lessons, but companion cards are not scaled to all lessons yet.
+- Local Tutor can cite lesson metadata broadly, but rich plain-language explanations come from the 8 demo cards.
+- Running `scan_curriculum.py` updates `data/lessons.json` `generated_at`; revert that file if only timestamp changes before unrelated commits.
