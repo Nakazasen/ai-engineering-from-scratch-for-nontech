@@ -20,6 +20,7 @@
       <nav class="topbar" aria-label="Điều hướng chính">
         <span class="brand">AI Engineering Companion</span>
         <a href="#overview">Tổng quan</a>
+        <a href="#localTutor">Gia sư local</a>
         <a href="#roadmap">12 tuần</a>
         <a href="#lessons">Bài học</a>
       </nav>
@@ -31,7 +32,8 @@
             Một lớp giao diện tiếng Việt, nhẹ và chạy local, giúp bạn đi qua curriculum AI Engineering theo lộ trình dễ hiểu hơn. (Bản B1: Thử nghiệm 8 bài học có <span class="badge badge-success">Bản non-tech</span>).
           </p>
           <div class="hero-actions">
-            <a class="button primary" href="#lessons">Khám phá bài học</a>
+            <a class="button primary" href="#localTutor">Hỏi gia sư local</a>
+            <a class="button secondary" href="#lessons">Khám phá bài học</a>
             <a class="button secondary" href="#roadmap">Xem lộ trình 12 tuần</a>
           </div>
         </div>
@@ -72,6 +74,22 @@
             <button id="btnStartLearning" class="button primary">Học bài đầu tiên</button>
           </div>
         </div>
+      </section>
+
+      <section class="panel local-tutor-panel" id="localTutor">
+        <div class="section-heading">
+          <p class="eyebrow">Gia sư local</p>
+          <h2>Hỏi trong bài học</h2>
+          <p class="detail-muted">Trả lời bằng tìm kiếm lexical trong dữ liệu local. Không gọi AI API, không gửi tiến độ học ra ngoài.</p>
+          <span class="badge badge-success">Chạy local, có nguồn trích dẫn</span>
+        </div>
+        <div class="tutor-search-box">
+          <label for="tutorQuestion">Câu hỏi của bạn</label>
+          <textarea id="tutorQuestion" rows="3" placeholder="Ví dụ: Tôi không hiểu RAG là gì, API key nguy hiểm ở đâu, hoặc tôi đang ở Track A nên học gì tiếp?"></textarea>
+          <button id="btnTutorSearch" class="button primary">Tìm trong bài học</button>
+        </div>
+        <div id="tutorAnswer" class="tutor-answer empty-state">Nhập câu hỏi để tìm trong 8 thẻ non-tech và metadata bài học local.</div>
+        <div id="tutorResults" class="tutor-results"></div>
       </section>
 
       <section class="panel" id="roadmap">

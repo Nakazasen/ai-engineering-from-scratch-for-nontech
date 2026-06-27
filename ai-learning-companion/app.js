@@ -4,6 +4,8 @@ const state = {
   cardsByLessonId: {},
   placementQuestions: [],
   learningTracks: {},
+  localTutorChunks: [],
+  localTutorReady: false,
   selectedLessonId: null,
   progress: {
     version: 1,
@@ -42,6 +44,12 @@ const els = {
   btnClosePlacement: document.querySelector('#btnClosePlacement'),
   btnSubmitPlacement: document.querySelector('#btnSubmitPlacement'),
   placementQuestionsContainer: document.querySelector('#placementQuestionsContainer'),
+
+  // B4 Local Tutor
+  tutorQuestion: document.querySelector('#tutorQuestion'),
+  btnTutorSearch: document.querySelector('#btnTutorSearch'),
+  tutorAnswer: document.querySelector('#tutorAnswer'),
+  tutorResults: document.querySelector('#tutorResults'),
 };
 
 // --- Progress Logic (Gate B2) ---
@@ -629,6 +637,142 @@ function submitPlacementTest() {
   document.getElementById('startLearningPanel').scrollIntoView({ behavior: 'smooth' });
 }
 
+// --- B4 Local Tutor Logic ---
+const TUTOR_SYNONYMS = {
+  rag: ['retrieval', 'truy xuất', 'tài liệu', 'nguồn', 'hỏi đáp'],
+  prompt: ['prompting', 'câu lệnh', 'viết lệnh'],
+  api: ['api key', 'key', 'mật khẩu', 'token', 'bảo mật'],
+  embedding: ['vector', 'biểu diễn số', 'nhúng'],
+  transformer: ['attention', 'chú ý', 'mô hình ngôn ngữ'],
+  code: ['không biết code', 'non-tech', 'người mới']
+};
+
+function normalizeTutorText(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .normalize('NFC')
+    .replace(/[^\p{L}\p{N}\s/-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tokenizeTutorQuery(query) {
+  const normalized = normalizeTutorText(query);
+  const tokens = normalized.split(' ').filter(token => token.length >= 2);
+  const expanded = [...tokens];
+  for (const token of tokens) {
+    if (TUTOR_SYNONYMS[token]) expanded.push(...TUTOR_SYNONYMS[token]);
+  }
+  if (normalized.includes('api key')) expanded.push('api key', 'key', 'bảo mật');
+  if (normalized.includes('không biết code')) expanded.push('không biết code', 'non-tech', 'người mới');
+  return unique(expanded.map(normalizeTutorText));
+}
+
+function scoreTutorChunk(tokens, rawQuery, chunk) {
+  const query = normalizeTutorText(rawQuery);
+  const title = normalizeTutorText(chunk.title);
+  const lessonId = normalizeTutorText(chunk.lesson_id || '');
+  const text = normalizeTutorText(chunk.text);
+  const section = normalizeTutorText(`${chunk.section || ''} ${chunk.citation_label || ''}`);
+  const keywords = (chunk.keywords || []).map(normalizeTutorText);
+  const currentTrack = state.progress.learner_profile?.recommended_track;
+  let score = 0;
+
+  if (query && (title.includes(query) || lessonId.includes(query))) score += 8;
+  for (const token of tokens) {
+    if (!token) continue;
+    if (keywords.includes(token)) score += 5;
+    if (title.includes(token)) score += 4;
+    if (text.includes(token)) score += 2;
+    if (section.includes(token)) score += 1;
+  }
+  if (currentTrack && (chunk.track_ids || []).includes(currentTrack)) score += 2;
+  if (chunk.source_type === 'nontech_card') score += 2;
+  return score;
+}
+
+function searchTutor(query) {
+  if (!state.localTutorReady || !state.localTutorChunks.length) return [];
+  const tokens = tokenizeTutorQuery(query);
+  if (!tokens.length) return [];
+  return state.localTutorChunks
+    .map(chunk => ({ chunk, score: scoreTutorChunk(tokens, query, chunk) }))
+    .filter(result => result.score >= 6)
+    .sort((a, b) => b.score - a.score || a.chunk.chunk_id.localeCompare(b.chunk.chunk_id))
+    .slice(0, 5);
+}
+
+function nextLessonForCurrentTrack() {
+  const trackId = state.progress.learner_profile?.recommended_track;
+  if (!trackId || !state.learningTracks[trackId]) return null;
+  const lessonId = state.learningTracks[trackId].lessons.find(id => state.progress.lessons[id]?.status !== 'completed')
+    || state.learningTracks[trackId].lessons[0];
+  const lesson = state.lessons.find(item => item.id === lessonId);
+  return lesson ? { trackId, lesson } : null;
+}
+
+function buildTutorAnswer(query, results) {
+  if (!state.localTutorReady) {
+    return '<p><strong>Chưa tải được chỉ mục gia sư local.</strong></p><p>Hãy chạy tool build index hoặc kiểm tra file <code>data/local_tutor_index.demo.json</code>.</p>';
+  }
+  if (!results.length) {
+    return '<p><strong>Chưa đủ dữ liệu trong local index để trả lời chắc chắn.</strong></p><p>Thử hỏi bằng từ khóa như: RAG, prompt, API key, transformer, hoặc không biết code.</p>';
+  }
+
+  const best = results[0].chunk;
+  const lesson = best.lesson_id ? state.lessons.find(item => item.id === best.lesson_id) : null;
+  const next = nextLessonForCurrentTrack();
+  const shortText = best.text.length > 360 ? `${best.text.slice(0, 360)}...` : best.text;
+  const lessonButton = lesson
+    ? `<button class="button secondary" data-tutor-lesson-id="${escapeHtml(lesson.id)}">Mở bài: ${escapeHtml(lesson.title)}</button>`
+    : '';
+  const nextText = next
+    ? `<p><strong>Nếu theo track hiện tại:</strong> bước tiếp theo phù hợp là <em>${escapeHtml(next.lesson.title)}</em>.</p>`
+    : '<p><strong>Gợi ý:</strong> Nếu chưa có track, hãy làm kiểm tra điểm bắt đầu để nhận lộ trình cá nhân.</p>';
+
+  return `
+    <p><strong>Mình tìm thấy phần liên quan nhất là:</strong> ${escapeHtml(best.citation_label)}.</p>
+    <p><strong>Nói ngắn gọn:</strong> ${escapeHtml(shortText)}</p>
+    ${lesson ? `<p><strong>Bài nên mở:</strong> ${escapeHtml(lesson.title)}</p>` : ''}
+    ${nextText}
+    <p><strong>Nguồn local:</strong> ${escapeHtml(best.source_path)} · ${escapeHtml(best.section)}</p>
+    <div class="tutor-actions">${lessonButton}</div>
+  `;
+}
+
+function renderTutorResults(results) {
+  if (!els.tutorResults) return;
+  if (!results.length) {
+    els.tutorResults.innerHTML = '';
+    return;
+  }
+  els.tutorResults.innerHTML = results.slice(0, 5).map(({ chunk, score }) => `
+    <article class="tutor-result-card">
+      <div class="badges">
+        <span class="badge">score ${escapeHtml(score)}</span>
+        <span class="badge">${escapeHtml(chunk.source_type)}</span>
+      </div>
+      <h3>${escapeHtml(chunk.title)}</h3>
+      <p>${escapeHtml(chunk.citation_label)}</p>
+      <small>${escapeHtml(chunk.source_path)} · ${escapeHtml(chunk.section)}</small>
+    </article>
+  `).join('');
+}
+
+function runTutorSearch() {
+  const query = els.tutorQuestion?.value.trim() || '';
+  if (!query) {
+    els.tutorAnswer.innerHTML = '<p>Nhập một câu hỏi để tìm trong dữ liệu local.</p>';
+    els.tutorResults.innerHTML = '';
+    return;
+  }
+  const results = searchTutor(query);
+  els.tutorAnswer.classList.remove('empty-state');
+  els.tutorAnswer.innerHTML = buildTutorAnswer(query, results);
+  renderTutorResults(results);
+}
+// ----------------------------
+
 function bindEvents() {
   els.searchInput.addEventListener('input', renderLessonList);
   els.phaseFilter.addEventListener('change', renderLessonList);
@@ -638,6 +782,20 @@ function bindEvents() {
   });
   if (els.btnClosePlacement) els.btnClosePlacement.addEventListener('click', closePlacementTest);
   if (els.btnSubmitPlacement) els.btnSubmitPlacement.addEventListener('click', submitPlacementTest);
+  if (els.btnTutorSearch) els.btnTutorSearch.addEventListener('click', runTutorSearch);
+  if (els.tutorQuestion) {
+    els.tutorQuestion.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) runTutorSearch();
+    });
+  }
+  if (els.tutorAnswer) {
+    els.tutorAnswer.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-tutor-lesson-id]');
+      if (!button) return;
+      document.getElementById('lessons').scrollIntoView({ behavior: 'smooth' });
+      selectLesson(button.dataset.tutorLessonId);
+    });
+  }
 }
 
 async function init() {
@@ -645,12 +803,13 @@ async function init() {
   loadProgress(); // Load B2 local storage
   
   try {
-    const [lessonIndex, roadmapIndex, cardsData, questionsData, tracksData] = await Promise.all([
+    const [lessonIndex, roadmapIndex, cardsData, questionsData, tracksData, tutorIndex] = await Promise.all([
       loadJson('data/lessons.json'),
       loadJson('data/roadmap_12_weeks.json'),
       loadJson('data/nontech-cards/cards.demo.json'),
       loadJson('data/placement_questions.json'),
-      loadJson('data/learning_tracks.json')
+      loadJson('data/learning_tracks.json'),
+      loadJson('data/local_tutor_index.demo.json')
     ]);
     
     if (lessonIndex) state.lessons = lessonIndex.lessons || [];
@@ -664,6 +823,12 @@ async function init() {
     
     if (questionsData) state.placementQuestions = questionsData;
     if (tracksData) state.learningTracks = tracksData;
+    if (tutorIndex && Array.isArray(tutorIndex.chunks)) {
+      state.localTutorChunks = tutorIndex.chunks;
+      state.localTutorReady = true;
+    } else if (els.tutorAnswer) {
+      els.tutorAnswer.innerHTML = 'Chưa tải được chỉ mục gia sư local. Các phần học khác vẫn dùng bình thường.';
+    }
 
     renderStats();
     renderRoadmap();
