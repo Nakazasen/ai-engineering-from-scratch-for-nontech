@@ -17,12 +17,13 @@ python -m http.server 8000
 
 Sau đó mở trình duyệt tại `http://localhost:8000`.
 
-### Cách học bằng card tiếng Việt
+### Cách học
 
-1. App hiện thị danh sách các bài học.
-2. Tìm các bài học có nhãn **Bản non-tech**. Đây là các bài học đã được đơn giản hóa cho người mới (Gate B1 hiện có 8 bài).
-3. Click vào bài học, đọc các phần giải thích: Ý tưởng chính, Ẩn dụ đời thường, Ví dụ tối giản.
-4. Làm phần **Kiểm tra hiểu (Quiz)** ở cuối bài để tự đánh giá kiến thức.
+1. **Bắt đầu học:** Trên giao diện, bấm nút **"Học bài đầu tiên"** tại bảng Tiến độ học tập.
+2. **Luồng học:** Đọc các phần được thiết kế riêng cho người non-tech (Mục tiêu, Vì sao cần hiểu, Ẩn dụ đời thường, Ví dụ tối giản...).
+3. **Làm bài kiểm tra (Quiz):** Ở cuối bài, hãy nộp bài kiểm tra. Nếu đạt 3/3 điểm, bài học sẽ tự động được đánh dấu ✅ Đã hiểu. Nếu chưa đạt, hãy làm theo gợi ý ⚠️ Cần ôn lại.
+4. **Xem tiến độ:** Bảng "Tiến độ học tập" trên cùng sẽ tự động đếm số bài bạn đã học và cần ôn. 
+5. **Xoá tiến độ (nếu muốn):** Bạn có thể bấm "Xóa tiến độ" để làm mới toàn bộ kết quả học của mình.
 
 ## Dành cho Maintainer
 
@@ -39,13 +40,19 @@ python ai-learning-companion/tools/scan_curriculum.py
 ```powershell
 python ai-learning-companion/tools/generate_nontech_cards.py
 ```
-*(Hiện tại script này dùng template được soạn sẵn để tạo nội dung cho 8 bài học demo. Không gọi AI API).*
 
 **3. Kiểm tra tính hợp lệ của dữ liệu thẻ (Schema Validation):**
 ```powershell
 python ai-learning-companion/tools/validate_nontech_cards.py
 ```
 
-### Tại sao B1 mới chỉ có 8 demo lessons?
+### Kiến trúc lưu trữ (Gate B2)
 
-Mục tiêu của Gate B1 là xây dựng hoàn chỉnh luồng UI/Data (hiển thị, quiz, validation) cho các bài học Non-tech mà không làm rủi ro hay phá vỡ curriculum gốc (485 lessons). Việc làm 8 bài giúp chứng minh MVP hoạt động trơn tru trước khi mở rộng (scale) lên toàn bộ repo, tránh tình trạng dịch máy kém chất lượng hoặc hallucination hàng loạt.
+Gate B2 sử dụng **`localStorage`** (key: `aiLearningCompanion.progress.v1`) để lưu tiến độ của người học tại client-side. KHÔNG cần backend, KHÔNG cần cơ sở dữ liệu. Dữ liệu sẽ mất nếu người dùng xóa dữ liệu trình duyệt hoặc nhấn "Xóa tiến độ".
+
+## Giới hạn hiện tại
+
+- Mới có 8 demo lessons được làm nội dung non-tech.
+- Chưa có bài kiểm tra xếp lớp (placement test).
+- Chưa có RAG/tutor nội bộ hỗ trợ giải đáp.
+- Hoàn toàn chưa tích hợp AI API (giữ an toàn, offline-first).

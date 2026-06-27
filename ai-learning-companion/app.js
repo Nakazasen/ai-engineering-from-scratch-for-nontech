@@ -3,7 +3,14 @@ const state = {
   roadmap: [],
   cardsByLessonId: {},
   selectedLessonId: null,
+  progress: {
+    version: 1,
+    last_opened_lesson_id: null,
+    lessons: {}
+  }
 };
+
+const PROGRESS_KEY = 'aiLearningCompanion.progress.v1';
 
 const els = {
   statLessons: document.querySelector('#statLessons'),
@@ -14,7 +21,113 @@ const els = {
   lessonDetail: document.querySelector('#lessonDetail'),
   searchInput: document.querySelector('#searchInput'),
   phaseFilter: document.querySelector('#phaseFilter'),
+  
+  // B2
+  startLearningPanel: document.querySelector('#startLearningPanel'),
+  progCompleted: document.querySelector('#progCompleted'),
+  progReview: document.querySelector('#progReview'),
+  btnStartLearning: document.querySelector('#btnStartLearning'),
+  btnResetProgress: document.querySelector('#btnResetProgress'),
 };
+
+// --- Progress Logic (Gate B2) ---
+function loadProgress() {
+  try {
+    const data = localStorage.getItem(PROGRESS_KEY);
+    if (data) {
+      state.progress = JSON.parse(data);
+    }
+  } catch (e) {
+    console.warn("Could not load progress from localStorage", e);
+  }
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(state.progress));
+    updateDashboard();
+    renderLessonList();
+  } catch (e) {
+    console.warn("Could not save progress to localStorage", e);
+  }
+}
+
+function resetProgress() {
+  if (confirm("Bạn có chắc chắn muốn xóa toàn bộ tiến độ học tập? Thao tác này không thể hoàn tác.")) {
+    state.progress = {
+      version: 1,
+      last_opened_lesson_id: null,
+      lessons: {}
+    };
+    saveProgress();
+    if (state.selectedLessonId) selectLesson(state.selectedLessonId);
+  }
+}
+
+function updateProgressStatus(lessonId, status, quizAttempt = null) {
+  if (!state.progress.lessons[lessonId]) {
+    state.progress.lessons[lessonId] = {
+      status: 'not_started',
+      last_opened_at: new Date().toISOString(),
+      quiz_attempts: []
+    };
+  }
+  
+  state.progress.last_opened_lesson_id = lessonId;
+  const lProg = state.progress.lessons[lessonId];
+  lProg.last_opened_at = new Date().toISOString();
+  
+  if (status) {
+    lProg.status = status;
+    if (status === 'completed') {
+      lProg.completed_at = new Date().toISOString();
+    }
+  }
+  
+  if (quizAttempt) {
+    lProg.quiz_attempts.push(quizAttempt);
+  }
+  
+  saveProgress();
+}
+
+function updateDashboard() {
+  if (!els.startLearningPanel) return;
+  
+  const totalCards = Object.keys(state.cardsByLessonId).length;
+  if (totalCards === 0) return; // No demo cards loaded
+  
+  els.startLearningPanel.style.display = 'block';
+  
+  let completed = 0;
+  let review = 0;
+  
+  for (const [id, lProg] of Object.entries(state.progress.lessons)) {
+    if (lProg.status === 'completed') completed++;
+    if (lProg.status === 'review') review++;
+  }
+  
+  els.progCompleted.textContent = completed;
+  els.progReview.textContent = review;
+  
+  const defaultFirstLesson = "00-setup-and-tooling/01-dev-environment";
+  const targetLessonId = state.progress.last_opened_lesson_id || defaultFirstLesson;
+  
+  if (state.progress.last_opened_lesson_id) {
+    els.btnStartLearning.textContent = "Học tiếp bài gần nhất";
+  } else {
+    els.btnStartLearning.textContent = "Học bài đầu tiên";
+  }
+  
+  els.btnStartLearning.onclick = () => {
+    // scroll to lesson section
+    document.getElementById('lessons').scrollIntoView({ behavior: 'smooth' });
+    selectLesson(targetLessonId);
+  };
+  
+  els.btnResetProgress.onclick = resetProgress;
+}
+// ---------------------------------
 
 async function loadJson(path) {
   try {
@@ -83,36 +196,98 @@ function renderLessonList() {
     els.lessonList.innerHTML = '<p class="empty-state">Không tìm thấy lesson phù hợp.</p>';
     return;
   }
-  els.lessonList.innerHTML = lessons.map((lesson) => `
-    <button class="lesson-card ${lesson.id === state.selectedLessonId ? 'active' : ''}" data-lesson-id="${escapeHtml(lesson.id)}">
-      <strong>${escapeHtml(lesson.title)}</strong>
-      <p>${escapeHtml(lesson.id)}</p>
-      ${state.cardsByLessonId[lesson.id] ? '<span class="badge badge-success">Bản non-tech</span>' : ''}
-    </button>
-  `).join('');
+  els.lessonList.innerHTML = lessons.map((lesson) => {
+    const hasCard = state.cardsByLessonId[lesson.id];
+    const lProg = state.progress.lessons[lesson.id];
+    
+    let extraBadges = '';
+    if (hasCard) {
+      extraBadges += `<span class="badge badge-success">Bản non-tech</span> `;
+    }
+    if (lProg) {
+      if (lProg.status === 'completed') extraBadges += `<span class="badge badge-completed">✅ Đã hiểu</span> `;
+      if (lProg.status === 'review') extraBadges += `<span class="badge badge-review">⚠️ Cần ôn</span> `;
+    }
+    
+    return `
+      <button class="lesson-card ${lesson.id === state.selectedLessonId ? 'active' : ''}" data-lesson-id="${escapeHtml(lesson.id)}">
+        <strong>${escapeHtml(lesson.title)}</strong>
+        <p>${escapeHtml(lesson.id)}</p>
+        <div class="badges" style="margin-top: 8px; margin-bottom: 0;">${extraBadges}</div>
+      </button>
+    `;
+  }).join('');
 }
 
-window.checkAnswer = function(lessonId, questionIndex, optionIndex, correctIndex, explanation) {
-  const containerId = `quiz-${lessonId.replace(/[^a-zA-Z0-9]/g, '-')}-${questionIndex}`;
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const isCorrect = optionIndex === correctIndex;
-  const buttons = container.querySelectorAll('button.quiz-option');
+// B2 Quiz Logic
+window.submitQuiz = function(lessonId) {
+  const card = state.cardsByLessonId[lessonId];
+  if (!card) return;
   
-  buttons.forEach((btn, idx) => {
-    btn.disabled = true;
-    if (idx === correctIndex) {
-      btn.classList.add('correct');
-    } else if (idx === optionIndex && !isCorrect) {
-      btn.classList.add('incorrect');
+  const questions = card.check_questions || [];
+  let score = 0;
+  const answers = [];
+  
+  questions.forEach((q, qIndex) => {
+    const formName = `q_${lessonId}_${qIndex}`;
+    const selected = document.querySelector(`input[name="${formName}"]:checked`);
+    
+    const container = document.getElementById(`quiz-${lessonId.replace(/[^a-zA-Z0-9]/g, '-')}-${qIndex}`);
+    const labels = container.querySelectorAll('.quiz-option-label');
+    
+    // reset styling
+    labels.forEach(l => {
+      l.classList.remove('correct', 'incorrect');
+      l.querySelector('input').disabled = true; // disable after submit
+    });
+    
+    const selectedVal = selected ? parseInt(selected.value, 10) : -1;
+    answers.push(selectedVal);
+    
+    if (selectedVal === q.correct) {
+      score++;
+      if (selectedVal >= 0) labels[selectedVal].classList.add('correct');
+    } else {
+      if (selectedVal >= 0) labels[selectedVal].classList.add('incorrect');
+      if (q.correct >= 0) labels[q.correct].classList.add('correct'); // highlight correct one
     }
   });
+  
+  const feedbackEl = document.getElementById(`quiz-feedback-${lessonId.replace(/[^a-zA-Z0-9]/g, '-')}`);
+  const btnSubmit = document.getElementById(`btn-submit-${lessonId.replace(/[^a-zA-Z0-9]/g, '-')}`);
+  if (btnSubmit) btnSubmit.disabled = true;
+  
+  let suggestion = '';
+  let newStatus = 'started';
+  if (score === questions.length && questions.length > 0) {
+    suggestion = "🎉 Xuất sắc! Bạn có thể học bài tiếp theo.";
+    newStatus = 'completed';
+    feedbackEl.className = 'quiz-feedback feedback-correct';
+  } else {
+    suggestion = "💡 Nên đọc lại phần giải thích và thử lại (bạn có thể tải lại trang để làm lại).";
+    newStatus = 'review';
+    feedbackEl.className = 'quiz-feedback feedback-incorrect';
+  }
+  
+  feedbackEl.innerHTML = `<strong>Điểm số: ${score}/${questions.length}</strong><br>${suggestion}`;
+  feedbackEl.style.display = 'block';
+  
+  const attempt = {
+    score: score,
+    total: questions.length,
+    answers: answers,
+    at: new Date().toISOString()
+  };
+  updateProgressStatus(lessonId, newStatus, attempt);
+  
+  // Re-render detail to show new action buttons state if needed, 
+  // but just updating buttons here is cleaner. We'll rely on the re-render.
+  renderLessonDetail(state.lessons.find(l => l.id === lessonId));
+};
 
-  const feedback = container.querySelector('.quiz-feedback');
-  feedback.innerHTML = `<strong>${isCorrect ? '✅ Đúng!' : '❌ Sai rồi.'}</strong> ${escapeHtml(explanation)}`;
-  feedback.style.display = 'block';
-  feedback.className = `quiz-feedback ${isCorrect ? 'feedback-correct' : 'feedback-incorrect'}`;
+window.markStatus = function(lessonId, status) {
+  updateProgressStatus(lessonId, status);
+  renderLessonDetail(state.lessons.find(l => l.id === lessonId));
 };
 
 function renderLessonDetail(lesson) {
@@ -125,56 +300,138 @@ function renderLessonDetail(lesson) {
   let nontechHtml = '';
 
   if (card) {
+    // Record start
+    const currentStatus = state.progress.lessons[lesson.id]?.status;
+    updateProgressStatus(lesson.id, (!currentStatus || currentStatus === 'not_started') ? 'started' : undefined);
+    
+    const safeId = lesson.id.replace(/[^a-zA-Z0-9]/g, '-');
+    const lProg = state.progress.lessons[lesson.id];
+    
     nontechHtml = `
       <h3>Học kiểu non-tech</h3>
-      <div class="nontech-card-real">
-        <h4>Tóm tắt ngắn gọn</h4>
-        <p>${escapeHtml(card.plain_language_summary_vi)}</p>
+      <div class="lesson-player">
         
-        <h4>Vì sao cần hiểu?</h4>
-        <p>${escapeHtml(card.why_it_matters_vi)}</p>
-        
-        <h4>Ẩn dụ đời thường</h4>
-        <p>${escapeHtml(card.daily_life_analogy_vi)}</p>
-        
-        <h4>Mô hình tư duy</h4>
-        <p>${escapeHtml(card.mental_model_vi)}</p>
-        
-        <h4>Ví dụ tối giản</h4>
-        <p><code>${escapeHtml(card.minimal_example_vi)}</code></p>
-        
-        <h4>Dùng trong app AI thật</h4>
-        <p>${escapeHtml(card.real_app_use_vi)}</p>
-        
-        <h4>Hiểu sai thường gặp</h4>
-        <ul>
-          ${(card.common_misunderstandings_vi || []).map(item => `<li>${escapeHtml(item)}</li>`).join('')}
-        </ul>
-        
-        <h4>Nguồn tham chiếu</h4>
-        <ul class="citation-list">
-          ${(card.source_citations || []).map(cit => `<li><strong>${escapeHtml(cit.heading)}:</strong> "${escapeHtml(cit.quote)}" <br><small>(${escapeHtml(card.source_doc_path)})</small></li>`).join('')}
-        </ul>
-
-        <h4>Kiểm tra hiểu (Quiz)</h4>
-        <div class="quiz-container">
-          ${(card.check_questions || []).map((q, qIndex) => {
-            const containerId = `quiz-${card.lesson_id.replace(/[^a-zA-Z0-9]/g, '-')}-${qIndex}`;
-            return `
-              <div class="quiz-question" id="${containerId}">
-                <p><strong>Câu ${qIndex + 1}:</strong> ${escapeHtml(q.question)}</p>
-                <div class="quiz-options">
-                  ${q.options.map((opt, optIndex) => `
-                    <button class="quiz-option" onclick="checkAnswer('${escapeHtml(card.lesson_id)}', ${qIndex}, ${optIndex}, ${q.correct}, '${escapeHtml(q.explanation)}')">
-                      ${escapeHtml(opt)}
-                    </button>
-                  `).join('')}
-                </div>
-                <div class="quiz-feedback" style="display: none;"></div>
-              </div>
-            `;
-          }).join('')}
+        <div class="player-step">
+          <div class="step-header">
+            <div class="step-number">1</div>
+            <h4 class="step-title">Mục tiêu bài học</h4>
+          </div>
+          <div class="step-content">
+            <p>${escapeHtml(card.plain_language_summary_vi)}</p>
+          </div>
         </div>
+        
+        <div class="player-step">
+          <div class="step-header">
+            <div class="step-number">2</div>
+            <h4 class="step-title">Vì sao cần hiểu?</h4>
+          </div>
+          <div class="step-content">
+            <p>${escapeHtml(card.why_it_matters_vi)}</p>
+          </div>
+        </div>
+        
+        <div class="player-step">
+          <div class="step-header">
+            <div class="step-number">3</div>
+            <h4 class="step-title">Ẩn dụ đời thường</h4>
+          </div>
+          <div class="step-content">
+            <p>${escapeHtml(card.daily_life_analogy_vi)}</p>
+          </div>
+        </div>
+        
+        <div class="player-step">
+          <div class="step-header">
+            <div class="step-number">4</div>
+            <h4 class="step-title">Mô hình tư duy</h4>
+          </div>
+          <div class="step-content">
+            <p>${escapeHtml(card.mental_model_vi)}</p>
+          </div>
+        </div>
+        
+        <div class="player-step">
+          <div class="step-header">
+            <div class="step-number">5</div>
+            <h4 class="step-title">Ví dụ tối giản</h4>
+          </div>
+          <div class="step-content">
+            <code>${escapeHtml(card.minimal_example_vi)}</code>
+          </div>
+        </div>
+        
+        <div class="player-step">
+          <div class="step-header">
+            <div class="step-number">6</div>
+            <h4 class="step-title">Dùng trong app AI thật</h4>
+          </div>
+          <div class="step-content">
+            <p>${escapeHtml(card.real_app_use_vi)}</p>
+          </div>
+        </div>
+        
+        <div class="player-step">
+          <div class="step-header">
+            <div class="step-number">7</div>
+            <h4 class="step-title">Hiểu sai thường gặp</h4>
+          </div>
+          <div class="step-content">
+            <ul>
+              ${(card.common_misunderstandings_vi || []).map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+        
+        <div class="player-step">
+          <div class="step-header">
+            <div class="step-number">8</div>
+            <h4 class="step-title">Kiểm tra hiểu (Quiz)</h4>
+          </div>
+          <div class="step-content">
+            <div class="quiz-form">
+              ${(card.check_questions || []).map((q, qIndex) => {
+                const containerId = `quiz-${safeId}-${qIndex}`;
+                return `
+                  <div class="quiz-question" id="${containerId}">
+                    <p><strong>Câu ${qIndex + 1}:</strong> ${escapeHtml(q.question)}</p>
+                    <div class="quiz-options">
+                      ${q.options.map((opt, optIndex) => `
+                        <label class="quiz-option-label">
+                          <input type="radio" name="q_${escapeHtml(card.lesson_id)}_${qIndex}" value="${optIndex}">
+                          <span>${escapeHtml(opt)}</span>
+                        </label>
+                      `).join('')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+              
+              <div class="quiz-actions">
+                <button id="btn-submit-${safeId}" class="button primary" onclick="submitQuiz('${escapeHtml(card.lesson_id)}')">Nộp bài kiểm tra</button>
+                <div id="quiz-feedback-${safeId}" class="quiz-feedback" style="display: none;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="player-step">
+          <div class="step-header">
+            <div class="step-number">9</div>
+            <h4 class="step-title">Nguồn tham chiếu</h4>
+          </div>
+          <div class="step-content">
+            <ul class="citation-list">
+              ${(card.source_citations || []).map(cit => `<li><strong>${escapeHtml(cit.heading)}:</strong> "${escapeHtml(cit.quote)}" <br><small>(${escapeHtml(card.source_doc_path)})</small></li>`).join('')}
+            </ul>
+          </div>
+        </div>
+        
+        <div class="player-actions">
+           <button class="button ${lProg?.status === 'completed' ? 'primary' : 'secondary'}" onclick="markStatus('${escapeHtml(card.lesson_id)}', 'completed')">✅ Đánh dấu đã hiểu</button>
+           <button class="button ${lProg?.status === 'review' ? 'primary' : 'secondary'}" onclick="markStatus('${escapeHtml(card.lesson_id)}', 'review')">⚠️ Cần ôn lại</button>
+        </div>
+
       </div>
     `;
   } else {
@@ -243,6 +500,8 @@ function bindEvents() {
 
 async function init() {
   bindEvents();
+  loadProgress(); // Load B2 local storage
+  
   try {
     const [lessonIndex, roadmapIndex, cardsData] = await Promise.all([
       loadJson('data/lessons.json'),
@@ -262,7 +521,9 @@ async function init() {
     renderStats();
     renderRoadmap();
     renderPhaseFilter();
+    updateDashboard(); // Initial dashboard render
     renderLessonList();
+    
     if (state.lessons.length) selectLesson(state.lessons[0].id);
   } catch (error) {
     els.lessonDetail.innerHTML = `<p class="empty-state">${escapeHtml(error.message)}. Hãy chạy scanner trước.</p>`;
