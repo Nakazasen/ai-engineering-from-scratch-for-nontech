@@ -2,10 +2,13 @@ const state = {
   lessons: [],
   roadmap: [],
   cardsByLessonId: {},
+  placementQuestions: [],
+  learningTracks: {},
   selectedLessonId: null,
   progress: {
     version: 1,
     last_opened_lesson_id: null,
+    learner_profile: null,
     lessons: {}
   }
 };
@@ -26,8 +29,19 @@ const els = {
   startLearningPanel: document.querySelector('#startLearningPanel'),
   progCompleted: document.querySelector('#progCompleted'),
   progReview: document.querySelector('#progReview'),
+  totalLessonsInTrack: document.querySelector('#totalLessonsInTrack'),
   btnStartLearning: document.querySelector('#btnStartLearning'),
   btnResetProgress: document.querySelector('#btnResetProgress'),
+  btnTakePlacement: document.querySelector('#btnTakePlacement'),
+  recommendedTrackContainer: document.querySelector('#recommendedTrackContainer'),
+  trackName: document.querySelector('#trackName'),
+  trackDesc: document.querySelector('#trackDesc'),
+  
+  // B3 Modal
+  placementTestModal: document.querySelector('#placementTestModal'),
+  btnClosePlacement: document.querySelector('#btnClosePlacement'),
+  btnSubmitPlacement: document.querySelector('#btnSubmitPlacement'),
+  placementQuestionsContainer: document.querySelector('#placementQuestionsContainer'),
 };
 
 // --- Progress Logic (Gate B2) ---
@@ -35,7 +49,11 @@ function loadProgress() {
   try {
     const data = localStorage.getItem(PROGRESS_KEY);
     if (data) {
-      state.progress = JSON.parse(data);
+      const parsed = JSON.parse(data);
+      if (!parsed.learner_profile) {
+        parsed.learner_profile = null; // Migration for B2 to B3
+      }
+      state.progress = parsed;
     }
   } catch (e) {
     console.warn("Could not load progress from localStorage", e);
@@ -53,10 +71,11 @@ function saveProgress() {
 }
 
 function resetProgress() {
-  if (confirm("Bạn có chắc chắn muốn xóa toàn bộ tiến độ học tập? Thao tác này không thể hoàn tác.")) {
+  if (confirm("Bạn có chắc chắn muốn xóa toàn bộ tiến độ học tập và kết quả kiểm tra điểm bắt đầu? Thao tác này không thể hoàn tác.")) {
     state.progress = {
       version: 1,
       last_opened_lesson_id: null,
+      learner_profile: null,
       lessons: {}
     };
     saveProgress();
@@ -110,14 +129,44 @@ function updateDashboard() {
   els.progCompleted.textContent = completed;
   els.progReview.textContent = review;
   
+  const profile = state.progress.learner_profile;
   const defaultFirstLesson = "00-setup-and-tooling/01-dev-environment";
-  const targetLessonId = state.progress.last_opened_lesson_id || defaultFirstLesson;
+  let targetLessonId = state.progress.last_opened_lesson_id;
+  let totalInTrack = totalCards;
   
-  if (state.progress.last_opened_lesson_id) {
-    els.btnStartLearning.textContent = "Học tiếp bài gần nhất";
+  if (profile && profile.recommended_track && state.learningTracks[profile.recommended_track]) {
+    const track = state.learningTracks[profile.recommended_track];
+    if (els.recommendedTrackContainer) els.recommendedTrackContainer.style.display = 'block';
+    if (els.trackName) els.trackName.textContent = track.name;
+    if (els.trackDesc) els.trackDesc.textContent = track.description;
+    if (els.btnTakePlacement) els.btnTakePlacement.textContent = "Làm lại kiểm tra";
+    
+    totalInTrack = track.lessons.length;
+    
+    // Find next lesson in track
+    if (!targetLessonId || !track.lessons.includes(targetLessonId) || state.progress.lessons[targetLessonId]?.status === 'completed') {
+      const nextUncompleted = track.lessons.find(id => state.progress.lessons[id]?.status !== 'completed');
+      targetLessonId = nextUncompleted || track.lessons[0];
+    }
+    
+    if (state.progress.last_opened_lesson_id) {
+       els.btnStartLearning.textContent = "Học tiếp theo track của tôi";
+    } else {
+       els.btnStartLearning.textContent = "Bắt đầu track của tôi";
+    }
   } else {
-    els.btnStartLearning.textContent = "Học bài đầu tiên";
+    if (els.recommendedTrackContainer) els.recommendedTrackContainer.style.display = 'none';
+    if (els.btnTakePlacement) els.btnTakePlacement.textContent = "Kiểm tra điểm bắt đầu";
+    targetLessonId = targetLessonId || defaultFirstLesson;
+    
+    if (state.progress.last_opened_lesson_id) {
+      els.btnStartLearning.textContent = "Học tiếp bài gần nhất";
+    } else {
+      els.btnStartLearning.textContent = "Học bài đầu tiên";
+    }
   }
+  
+  if (els.totalLessonsInTrack) els.totalLessonsInTrack.textContent = totalInTrack;
   
   els.btnStartLearning.onclick = () => {
     // scroll to lesson section
@@ -126,6 +175,7 @@ function updateDashboard() {
   };
   
   els.btnResetProgress.onclick = resetProgress;
+  if (els.btnTakePlacement) els.btnTakePlacement.onclick = openPlacementTest;
 }
 // ---------------------------------
 
@@ -489,6 +539,85 @@ function selectLesson(id) {
   renderLessonDetail(lesson);
 }
 
+// --- B3 Placement Test Logic ---
+function openPlacementTest() {
+  if (els.placementTestModal) els.placementTestModal.style.display = 'flex';
+  renderPlacementTest();
+}
+
+function closePlacementTest() {
+  if (els.placementTestModal) els.placementTestModal.style.display = 'none';
+}
+
+function renderPlacementTest() {
+  if (!els.placementQuestionsContainer) return;
+  
+  if (!state.placementQuestions.length) {
+    els.placementQuestionsContainer.innerHTML = '<p>Không tải được câu hỏi.</p>';
+    return;
+  }
+  
+  els.placementQuestionsContainer.innerHTML = state.placementQuestions.map((q, index) => {
+    return `
+      <div class="placement-question">
+        <h4>Câu ${index + 1}: ${escapeHtml(q.text)}</h4>
+        <div class="quiz-options">
+          ${q.options.map(opt => `
+            <label class="quiz-option-label" style="font-weight: normal;">
+              <input type="radio" name="place_${q.id}" value="${escapeHtml(opt.id)}">
+              <span>${escapeHtml(opt.text)}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function submitPlacementTest() {
+  const scores = { work_ai_user: 0, workflow_operator: 0, ai_engineer_from_scratch: 0 };
+  let allAnswered = true;
+  
+  state.placementQuestions.forEach(q => {
+    const selected = document.querySelector(`input[name="place_${q.id}"]:checked`);
+    if (!selected) {
+      allAnswered = false;
+    } else {
+      const opt = q.options.find(o => o.id === selected.value);
+      if (opt && opt.scores) {
+        for (const [track, score] of Object.entries(opt.scores)) {
+          scores[track] = (scores[track] || 0) + score;
+        }
+      }
+    }
+  });
+  
+  if (!allAnswered) {
+    alert("Vui lòng trả lời tất cả các câu hỏi để có kết quả chính xác nhất!");
+    return;
+  }
+  
+  let bestTrack = 'work_ai_user';
+  let maxScore = -1;
+  for (const [track, score] of Object.entries(scores)) {
+    if (score > maxScore) {
+      maxScore = score;
+      bestTrack = track;
+    }
+  }
+  
+  state.progress.learner_profile = {
+    placement_completed: true,
+    recommended_track: bestTrack,
+    placement_score: scores,
+    completed_at: new Date().toISOString()
+  };
+  
+  saveProgress();
+  closePlacementTest();
+  document.getElementById('startLearningPanel').scrollIntoView({ behavior: 'smooth' });
+}
+
 function bindEvents() {
   els.searchInput.addEventListener('input', renderLessonList);
   els.phaseFilter.addEventListener('change', renderLessonList);
@@ -496,6 +625,8 @@ function bindEvents() {
     const button = event.target.closest('[data-lesson-id]');
     if (button) selectLesson(button.dataset.lessonId);
   });
+  if (els.btnClosePlacement) els.btnClosePlacement.addEventListener('click', closePlacementTest);
+  if (els.btnSubmitPlacement) els.btnSubmitPlacement.addEventListener('click', submitPlacementTest);
 }
 
 async function init() {
@@ -503,10 +634,12 @@ async function init() {
   loadProgress(); // Load B2 local storage
   
   try {
-    const [lessonIndex, roadmapIndex, cardsData] = await Promise.all([
+    const [lessonIndex, roadmapIndex, cardsData, questionsData, tracksData] = await Promise.all([
       loadJson('data/lessons.json'),
       loadJson('data/roadmap_12_weeks.json'),
-      loadJson('data/nontech-cards/cards.demo.json')
+      loadJson('data/nontech-cards/cards.demo.json'),
+      loadJson('data/placement_questions.json'),
+      loadJson('data/learning_tracks.json')
     ]);
     
     if (lessonIndex) state.lessons = lessonIndex.lessons || [];
@@ -517,6 +650,9 @@ async function init() {
         state.cardsByLessonId[card.lesson_id] = card;
       });
     }
+    
+    if (questionsData) state.placementQuestions = questionsData;
+    if (tracksData) state.learningTracks = tracksData;
 
     renderStats();
     renderRoadmap();

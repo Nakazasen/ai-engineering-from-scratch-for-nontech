@@ -1,0 +1,35 @@
+﻿{
+  "work_ai_user": {
+    "name": "AI User Mạnh (Ứng dụng công việc)",
+    "description": "Lộ trình tối ưu cho người non-tech muốn dùng AI để tăng vọt hiệu suất làm việc. Tập trung vào cách giao tiếp với AI (Prompt) và hiểu cách đưa dữ liệu vào AI một cách an toàn.",
+    "lessons": [
+      "11-llm-engineering/01-prompt-engineering",
+      "00-setup-and-tooling/04-apis-and-keys",
+      "11-llm-engineering/06-rag",
+      "02-ml-fundamentals/01-what-is-machine-learning"
+    ]
+  },
+  "workflow_operator": {
+    "name": "AI Workflow Operator (Tự động hóa)",
+    "description": "Lộ trình cho người muốn tự động hóa công việc bằng AI. Bạn sẽ hiểu cách các hệ thống AI giao tiếp với nhau (API) và cách xây dựng các luồng công việc thông minh.",
+    "lessons": [
+      "00-setup-and-tooling/04-apis-and-keys",
+      "11-llm-engineering/01-prompt-engineering",
+      "11-llm-engineering/06-rag",
+      "07-transformers-deep-dive/01-why-transformers"
+    ]
+  },
+  "ai_engineer_from_scratch": {
+    "name": "AI Engineer (Từ nền tảng gốc)",
+    "description": "Lộ trình kỹ thuật bài bản dành cho người muốn hiểu sâu sắc cách AI hoạt động. Bạn sẽ đi từ môi trường code, toán học nền tảng, đến cách xây dựng các mô hình AI hiện đại.",
+    "lessons": [
+      "00-setup-and-tooling/01-dev-environment",
+      "01-math-foundations/01-linear-algebra-intuition",
+      "02-ml-fundamentals/01-what-is-machine-learning",
+      "05-nlp-foundations-to-advanced/01-text-processing",
+      "07-transformers-deep-dive/01-why-transformers",
+      "11-llm-engineering/01-prompt-engineering",
+      "11-llm-engineering/06-rag"
+    ]
+  }
+}

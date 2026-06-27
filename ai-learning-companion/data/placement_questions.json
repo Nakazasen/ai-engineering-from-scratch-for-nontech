@@ -1,0 +1,170 @@
+﻿[
+  {
+    "id": "q1",
+    "text": "Bạn có kinh nghiệm lập trình (viết code) không?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Hoàn toàn không, mình là người non-tech.",
+        "scores": { "work_ai_user": 2, "workflow_operator": 1, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "b",
+        "text": "Biết một chút (đọc hiểu cơ bản hoặc từng học qua).",
+        "scores": { "work_ai_user": 0, "workflow_operator": 2, "ai_engineer_from_scratch": 1 }
+      },
+      {
+        "id": "c",
+        "text": "Mình là lập trình viên / có nền tảng kỹ thuật tốt.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 0, "ai_engineer_from_scratch": 3 }
+      }
+    ]
+  },
+  {
+    "id": "q2",
+    "text": "Bạn đã sử dụng ChatGPT hoặc các công cụ AI tương tự ở mức độ nào?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Thỉnh thoảng dùng để hỏi đáp linh tinh.",
+        "scores": { "work_ai_user": 1, "workflow_operator": 0, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "b",
+        "text": "Dùng hàng ngày cho công việc (viết email, lên ý tưởng, tóm tắt).",
+        "scores": { "work_ai_user": 2, "workflow_operator": 1, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "c",
+        "text": "Đã từng dùng API, viết script tự động hoặc tạo agent cơ bản.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 2, "ai_engineer_from_scratch": 2 }
+      }
+    ]
+  },
+  {
+    "id": "q3",
+    "text": "Mục tiêu lớn nhất của bạn khi học AI là gì?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Ứng dụng ngay vào công việc hiện tại để tăng hiệu suất (marketing, nhân sự, sale...).",
+        "scores": { "work_ai_user": 3, "workflow_operator": 0, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "b",
+        "text": "Tự động hóa quy trình, biết cách kết nối các công cụ AI với nhau thành luồng công việc.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 3, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "c",
+        "text": "Hiểu sâu bên dưới AI hoạt động thế nào, tự tay xây dựng ứng dụng hoặc model AI.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 0, "ai_engineer_from_scratch": 3 }
+      }
+    ]
+  },
+  {
+    "id": "q4",
+    "text": "Khi nghe đến thuật ngữ \"API\", bạn nghĩ gì?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Nghe quen quen nhưng không thực sự hiểu nó là gì.",
+        "scores": { "work_ai_user": 1, "workflow_operator": 0, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "b",
+        "text": "Biết nó dùng để kết nối các phần mềm, có thể copy/paste API key vào các công cụ có sẵn.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 2, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "c",
+        "text": "Đã từng viết code để gọi API và tự đọc tài liệu API (API Docs).",
+        "scores": { "work_ai_user": 0, "workflow_operator": 0, "ai_engineer_from_scratch": 2 }
+      }
+    ]
+  },
+  {
+    "id": "q5",
+    "text": "Bạn thích cách tiếp cận việc học nào nhất?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Đi thẳng vào ví dụ thực tế, học cách dùng (prompt) để ra kết quả ngay.",
+        "scores": { "work_ai_user": 2, "workflow_operator": 0, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "b",
+        "text": "Học qua các tình huống thực tế và cách tư duy lắp ghép các hệ thống.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 2, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "c",
+        "text": "Học bài bản từ gốc, đi từ lý thuyết, toán học, rồi mới đến code thực hành.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 0, "ai_engineer_from_scratch": 3 }
+      }
+    ]
+  },
+  {
+    "id": "q6",
+    "text": "Nếu nhắc đến Toán học (Đại số tuyến tính, Xác suất thống kê)...",
+    "options": [
+      {
+        "id": "a",
+        "text": "Mình thấy sợ và muốn tránh xa càng tốt.",
+        "scores": { "work_ai_user": 2, "workflow_operator": 1, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "b",
+        "text": "Sẽ cố gắng đọc hiểu ở mức khái niệm nếu nó thực sự cần thiết.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 2, "ai_engineer_from_scratch": 1 }
+      },
+      {
+        "id": "c",
+        "text": "Không thành vấn đề, mình sẵn sàng học hoặc đã có nền tảng tốt.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 0, "ai_engineer_from_scratch": 2 }
+      }
+    ]
+  },
+  {
+    "id": "q7",
+    "text": "Nếu AI trả lời sai (bị ảo giác - hallucination), bạn thường làm gì?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Bực mình, hỏi lại vài lần không được thì bỏ cuộc.",
+        "scores": { "work_ai_user": 1, "workflow_operator": 0, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "b",
+        "text": "Sửa lại câu lệnh (prompt), cung cấp thêm bối cảnh rõ ràng hơn.",
+        "scores": { "work_ai_user": 2, "workflow_operator": 1, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "c",
+        "text": "Tìm cách cung cấp tài liệu tự động cho nó (RAG) hoặc tinh chỉnh (fine-tune).",
+        "scores": { "work_ai_user": 0, "workflow_operator": 1, "ai_engineer_from_scratch": 2 }
+      }
+    ]
+  },
+  {
+    "id": "q8",
+    "text": "Bạn có thể dành bao nhiêu thời gian cho lộ trình học này?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Vài tiếng mỗi tuần, mình muốn học nhanh áp dụng gọn.",
+        "scores": { "work_ai_user": 2, "workflow_operator": 0, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "b",
+        "text": "Khoảng 3-5 tiếng/tuần, mình muốn học một cách có hệ thống.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 2, "ai_engineer_from_scratch": 0 }
+      },
+      {
+        "id": "c",
+        "text": "Nhiều hơn 5 tiếng/tuần, mình sẵn sàng cày cuốc nghiêm túc lâu dài.",
+        "scores": { "work_ai_user": 0, "workflow_operator": 0, "ai_engineer_from_scratch": 2 }
+      }
+    ]
+  }
+]

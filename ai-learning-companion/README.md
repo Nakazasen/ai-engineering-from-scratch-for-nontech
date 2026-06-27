@@ -19,11 +19,12 @@ Sau đó mở trình duyệt tại `http://localhost:8000`.
 
 ### Cách học
 
-1. **Bắt đầu học:** Trên giao diện, bấm nút **"Học bài đầu tiên"** tại bảng Tiến độ học tập.
-2. **Luồng học:** Đọc các phần được thiết kế riêng cho người non-tech (Mục tiêu, Vì sao cần hiểu, Ẩn dụ đời thường, Ví dụ tối giản...).
-3. **Làm bài kiểm tra (Quiz):** Ở cuối bài, hãy nộp bài kiểm tra. Nếu đạt 3/3 điểm, bài học sẽ tự động được đánh dấu ✅ Đã hiểu. Nếu chưa đạt, hãy làm theo gợi ý ⚠️ Cần ôn lại.
-4. **Xem tiến độ:** Bảng "Tiến độ học tập" trên cùng sẽ tự động đếm số bài bạn đã học và cần ôn. 
-5. **Xoá tiến độ (nếu muốn):** Bạn có thể bấm "Xóa tiến độ" để làm mới toàn bộ kết quả học của mình.
+1. **Làm kiểm tra điểm bắt đầu:** Bấm nút **"Kiểm tra điểm bắt đầu"** để làm bài đánh giá nhỏ. Hệ thống sẽ gợi ý 1 trong 3 lộ trình (track) phù hợp nhất với bạn.
+2. **Học theo track:** Bấm **"Bắt đầu track của tôi"** hoặc **"Học tiếp theo track"** để học tuần tự các bài được thiết kế cho mục tiêu của bạn.
+3. **Luồng học:** Đọc các phần được thiết kế riêng cho người non-tech (Mục tiêu, Vì sao cần hiểu, Ẩn dụ đời thường, Ví dụ tối giản...).
+4. **Làm bài kiểm tra (Quiz):** Ở cuối bài, hãy nộp bài kiểm tra. Nếu đạt 3/3 điểm, bài học sẽ tự động được đánh dấu ✅ Đã hiểu. Nếu chưa đạt, hãy làm theo gợi ý ⚠️ Cần ôn lại.
+5. **Xem tiến độ:** Bảng "Tiến độ học tập" trên cùng sẽ tự động đếm số bài bạn đã học trong track.
+6. **Xoá tiến độ (nếu muốn):** Bạn có thể bấm "Xóa tiến độ" để làm mới toàn bộ kết quả học và kết quả kiểm tra điểm bắt đầu của mình.
 
 ## Dành cho Maintainer
 
@@ -46,13 +47,21 @@ python ai-learning-companion/tools/generate_nontech_cards.py
 python ai-learning-companion/tools/validate_nontech_cards.py
 ```
 
-### Kiến trúc lưu trữ (Gate B2)
+### Kiến trúc lưu trữ (Gate B2 & B3)
 
-Gate B2 sử dụng **`localStorage`** (key: `aiLearningCompanion.progress.v1`) để lưu tiến độ của người học tại client-side. KHÔNG cần backend, KHÔNG cần cơ sở dữ liệu. Dữ liệu sẽ mất nếu người dùng xóa dữ liệu trình duyệt hoặc nhấn "Xóa tiến độ".
+Gate B2/B3 sử dụng **`localStorage`** (key: `aiLearningCompanion.progress.v1`) để lưu tiến độ của người học tại client-side. KHÔNG cần backend, KHÔNG cần cơ sở dữ liệu. Dữ liệu sẽ mất nếu người dùng xóa dữ liệu trình duyệt hoặc nhấn "Xóa tiến độ".
+
+Schema progress bao gồm:
+- `learner_profile`: Lưu kết quả placement test, recommended_track.
+- `last_opened_lesson_id`: ID bài học mở gần nhất.
+- `lessons`: Lưu trạng thái `completed`, `review` và lịch sử làm quiz.
+
+Các file cấu hình Data mới ở Gate B3:
+- `data/placement_questions.json`: Câu hỏi đánh giá và điểm map với các track.
+- `data/learning_tracks.json`: 3 lộ trình học và danh sách lesson ID tương ứng.
 
 ## Giới hạn hiện tại
 
-- Mới có 8 demo lessons được làm nội dung non-tech.
-- Chưa có bài kiểm tra xếp lớp (placement test).
+- Mới có 8 demo lessons được làm nội dung non-tech. Các learning track hiện cũng chỉ mapping vào 8 lesson này.
 - Chưa có RAG/tutor nội bộ hỗ trợ giải đáp.
 - Hoàn toàn chưa tích hợp AI API (giữ an toàn, offline-first).

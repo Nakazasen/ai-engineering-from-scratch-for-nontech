@@ -259,3 +259,18 @@ footer { max-width: 1180px; margin: 0 auto; padding: 24px 20px 42px; color: var(
 .quiz-option-label.incorrect { background: rgba(248, 113, 113, 0.15); border-color: #f87171; color: #eef6ff; }
 .quiz-actions { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
 .player-actions { margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end; }
+
+/* B3 Placement Test */
+.placement-test-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; overflow-y: auto; }
+.placement-content { background: #06111f; border: 1px solid var(--line); border-radius: 16px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; padding: 32px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.placement-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.placement-header h2 { margin: 0; font-size: 1.5rem; color: var(--accent); }
+.close-modal { background: transparent; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; padding: 4px; line-height: 1; }
+.close-modal:hover { color: var(--text); }
+.placement-question { margin-bottom: 24px; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 12px; border: 1px solid var(--line); }
+.placement-question h4 { margin-top: 0; margin-bottom: 16px; color: var(--text); font-size: 1.1rem; }
+.track-info { background: linear-gradient(135deg, rgba(8,17,31,0.8), rgba(12,24,43,0.9)); border: 1px solid var(--accent); border-radius: 12px; padding: 16px; margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.track-info h3 { margin: 0; color: var(--accent); font-size: 1.2rem; }
+.track-info p { margin: 0; color: var(--text); font-size: 0.95rem; line-height: 1.5; }
+.dashboard-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.dashboard-actions-top { display: flex; gap: 12px; }

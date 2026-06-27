@@ -45,18 +45,31 @@
 
     <main>
       <section class="panel" id="startLearningPanel" style="display: none;">
-        <div class="section-heading">
-          <p class="eyebrow">Tiến độ học tập</p>
-          <h2>Bắt đầu hành trình</h2>
+        <div class="dashboard-header-row">
+          <div class="section-heading" style="margin-bottom: 0;">
+            <p class="eyebrow">Tiến độ học tập</p>
+            <h2>Bắt đầu hành trình</h2>
+          </div>
+          <div class="dashboard-actions-top">
+            <button id="btnTakePlacement" class="button secondary">Kiểm tra điểm bắt đầu</button>
+            <button id="btnResetProgress" class="button secondary text-danger">Xóa tiến độ</button>
+          </div>
         </div>
-        <div class="progress-dashboard">
+        
+        <div id="recommendedTrackContainer" style="display: none;">
+          <div class="track-info">
+            <h3 id="trackName"></h3>
+            <p id="trackDesc"></p>
+          </div>
+        </div>
+
+        <div class="progress-dashboard" style="margin-top: 20px;">
           <div class="progress-stats">
-            <div class="stat-item"><strong id="progCompleted">0</strong> / 8 bài hoàn thành</div>
+            <div class="stat-item"><strong id="progCompleted">0</strong> / <span id="totalLessonsInTrack">8</span> bài hoàn thành</div>
             <div class="stat-item"><strong id="progReview">0</strong> bài cần ôn lại</div>
           </div>
           <div class="progress-actions">
             <button id="btnStartLearning" class="button primary">Học bài đầu tiên</button>
-            <button id="btnResetProgress" class="button secondary text-danger">Xóa tiến độ</button>
           </div>
         </div>
       </section>
@@ -93,6 +106,22 @@
       Phase A không gọi AI API, không cần API key, chỉ đọc index JSON local.
     </footer>
 
-    <script src="app.js"></script>
-  </body>
+    <div id="placementTestModal" class="placement-test-modal" style="display: none;">
+    <div class="placement-content">
+      <div class="placement-header">
+        <h2>Kiểm tra điểm bắt đầu</h2>
+        <button id="btnClosePlacement" class="close-modal">&times;</button>
+      </div>
+      <p style="color: var(--muted); margin-top: 0; margin-bottom: 24px;">Trả lời một số câu hỏi ngắn để hệ thống gợi ý lộ trình (track) phù hợp nhất với mục tiêu và nền tảng của bạn.</p>
+      
+      <div id="placementQuestionsContainer"></div>
+      
+      <div class="player-actions" style="margin-top: 24px;">
+        <button id="btnSubmitPlacement" class="button primary">Hoàn thành & Xem kết quả</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
 </html>
