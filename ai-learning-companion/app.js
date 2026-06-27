@@ -71,7 +71,7 @@ function saveProgress() {
 }
 
 function resetProgress() {
-  if (confirm("Bạn có chắc chắn muốn xóa toàn bộ tiến độ học tập và kết quả kiểm tra điểm bắt đầu? Thao tác này không thể hoàn tác.")) {
+  if (confirm("Bạn có chắc chắn muốn xóa toàn bộ tiến độ học tập và kết quả kiểm tra điểm bắt đầu trên trình duyệt này? Thao tác này không thể hoàn tác.")) {
     state.progress = {
       version: 1,
       last_opened_lesson_id: null,
@@ -118,24 +118,15 @@ function updateDashboard() {
   
   els.startLearningPanel.style.display = 'block';
   
-  let completed = 0;
-  let review = 0;
-  
-  for (const [id, lProg] of Object.entries(state.progress.lessons)) {
-    if (lProg.status === 'completed') completed++;
-    if (lProg.status === 'review') review++;
-  }
-  
-  els.progCompleted.textContent = completed;
-  els.progReview.textContent = review;
-  
   const profile = state.progress.learner_profile;
   const defaultFirstLesson = "00-setup-and-tooling/01-dev-environment";
   let targetLessonId = state.progress.last_opened_lesson_id;
   let totalInTrack = totalCards;
+  let trackLessons = null;
   
-  if (profile && profile.recommended_track && state.learningTracks[profile.recommended_track]) {
+  if (profile && profile.recommended_track && state.learningTracks && state.learningTracks[profile.recommended_track]) {
     const track = state.learningTracks[profile.recommended_track];
+    trackLessons = track.lessons;
     if (els.recommendedTrackContainer) els.recommendedTrackContainer.style.display = 'block';
     if (els.trackName) els.trackName.textContent = track.name;
     if (els.trackDesc) els.trackDesc.textContent = track.description;
@@ -165,6 +156,19 @@ function updateDashboard() {
       els.btnStartLearning.textContent = "Học bài đầu tiên";
     }
   }
+  
+  let completed = 0;
+  let review = 0;
+  
+  for (const [id, lProg] of Object.entries(state.progress.lessons)) {
+    if (trackLessons && !trackLessons.includes(id)) continue;
+    
+    if (lProg.status === 'completed') completed++;
+    if (lProg.status === 'review') review++;
+  }
+  
+  els.progCompleted.textContent = completed;
+  els.progReview.textContent = review;
   
   if (els.totalLessonsInTrack) els.totalLessonsInTrack.textContent = totalInTrack;
   
@@ -575,6 +579,12 @@ function renderPlacementTest() {
 }
 
 function submitPlacementTest() {
+  if (!state.placementQuestions || state.placementQuestions.length === 0) {
+    alert("Chưa tải được câu hỏi kiểm tra.");
+    return;
+  }
+
+  const TRACK_TIE_BREAK_ORDER = ['work_ai_user', 'workflow_operator', 'ai_engineer_from_scratch'];
   const scores = { work_ai_user: 0, workflow_operator: 0, ai_engineer_from_scratch: 0 };
   let allAnswered = true;
   
@@ -597,11 +607,12 @@ function submitPlacementTest() {
     return;
   }
   
-  let bestTrack = 'work_ai_user';
+  let bestTrack = TRACK_TIE_BREAK_ORDER[0];
   let maxScore = -1;
-  for (const [track, score] of Object.entries(scores)) {
-    if (score > maxScore) {
-      maxScore = score;
+  
+  for (const track of TRACK_TIE_BREAK_ORDER) {
+    if (scores[track] > maxScore) {
+      maxScore = scores[track];
       bestTrack = track;
     }
   }
