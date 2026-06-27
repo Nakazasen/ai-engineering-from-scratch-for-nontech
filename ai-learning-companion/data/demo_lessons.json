@@ -1,0 +1,12 @@
+{
+  "demo_lessons": [
+    "00-setup-and-tooling/01-dev-environment",
+    "00-setup-and-tooling/04-apis-and-keys",
+    "01-math-foundations/01-linear-algebra-intuition",
+    "02-ml-fundamentals/01-what-is-machine-learning",
+    "05-nlp-foundations-to-advanced/01-text-processing",
+    "07-transformers-deep-dive/01-why-transformers",
+    "11-llm-engineering/01-prompt-engineering",
+    "11-llm-engineering/06-rag"
+  ]
+}

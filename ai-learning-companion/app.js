@@ -1,6 +1,7 @@
 const state = {
   lessons: [],
   roadmap: [],
+  cardsByLessonId: {},
   selectedLessonId: null,
 };
 
@@ -16,9 +17,14 @@ const els = {
 };
 
 async function loadJson(path) {
-  const response = await fetch(path);
-  if (!response.ok) throw new Error(`Không tải được ${path}`);
-  return response.json();
+  try {
+    const response = await fetch(path);
+    if (!response.ok) throw new Error(`Không tải được ${path}`);
+    return await response.json();
+  } catch (error) {
+    console.warn(`Lỗi khi tải ${path}:`, error);
+    return null;
+  }
 }
 
 function unique(values) {
@@ -81,9 +87,33 @@ function renderLessonList() {
     <button class="lesson-card ${lesson.id === state.selectedLessonId ? 'active' : ''}" data-lesson-id="${escapeHtml(lesson.id)}">
       <strong>${escapeHtml(lesson.title)}</strong>
       <p>${escapeHtml(lesson.id)}</p>
+      ${state.cardsByLessonId[lesson.id] ? '<span class="badge badge-success">Bản non-tech</span>' : ''}
     </button>
   `).join('');
 }
+
+window.checkAnswer = function(lessonId, questionIndex, optionIndex, correctIndex, explanation) {
+  const containerId = `quiz-${lessonId.replace(/[^a-zA-Z0-9]/g, '-')}-${questionIndex}`;
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const isCorrect = optionIndex === correctIndex;
+  const buttons = container.querySelectorAll('button.quiz-option');
+  
+  buttons.forEach((btn, idx) => {
+    btn.disabled = true;
+    if (idx === correctIndex) {
+      btn.classList.add('correct');
+    } else if (idx === optionIndex && !isCorrect) {
+      btn.classList.add('incorrect');
+    }
+  });
+
+  const feedback = container.querySelector('.quiz-feedback');
+  feedback.innerHTML = `<strong>${isCorrect ? '✅ Đúng!' : '❌ Sai rồi.'}</strong> ${escapeHtml(explanation)}`;
+  feedback.style.display = 'block';
+  feedback.className = `quiz-feedback ${isCorrect ? 'feedback-correct' : 'feedback-incorrect'}`;
+};
 
 function renderLessonDetail(lesson) {
   if (!lesson) {
@@ -91,13 +121,77 @@ function renderLessonDetail(lesson) {
     return;
   }
 
-  const nontechBlocks = [
-    'Nói như người thường',
-    'Vấn đề thật nếu không hiểu khái niệm này',
-    'Minh họa trực quan',
-    'Code tối giản',
-    'Dùng trong app AI thật',
-  ];
+  const card = state.cardsByLessonId[lesson.id];
+  let nontechHtml = '';
+
+  if (card) {
+    nontechHtml = `
+      <h3>Học kiểu non-tech</h3>
+      <div class="nontech-card-real">
+        <h4>Tóm tắt ngắn gọn</h4>
+        <p>${escapeHtml(card.plain_language_summary_vi)}</p>
+        
+        <h4>Vì sao cần hiểu?</h4>
+        <p>${escapeHtml(card.why_it_matters_vi)}</p>
+        
+        <h4>Ẩn dụ đời thường</h4>
+        <p>${escapeHtml(card.daily_life_analogy_vi)}</p>
+        
+        <h4>Mô hình tư duy</h4>
+        <p>${escapeHtml(card.mental_model_vi)}</p>
+        
+        <h4>Ví dụ tối giản</h4>
+        <p><code>${escapeHtml(card.minimal_example_vi)}</code></p>
+        
+        <h4>Dùng trong app AI thật</h4>
+        <p>${escapeHtml(card.real_app_use_vi)}</p>
+        
+        <h4>Hiểu sai thường gặp</h4>
+        <ul>
+          ${(card.common_misunderstandings_vi || []).map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+        </ul>
+        
+        <h4>Nguồn tham chiếu</h4>
+        <ul class="citation-list">
+          ${(card.source_citations || []).map(cit => `<li><strong>${escapeHtml(cit.heading)}:</strong> "${escapeHtml(cit.quote)}" <br><small>(${escapeHtml(card.source_doc_path)})</small></li>`).join('')}
+        </ul>
+
+        <h4>Kiểm tra hiểu (Quiz)</h4>
+        <div class="quiz-container">
+          ${(card.check_questions || []).map((q, qIndex) => {
+            const containerId = `quiz-${card.lesson_id.replace(/[^a-zA-Z0-9]/g, '-')}-${qIndex}`;
+            return `
+              <div class="quiz-question" id="${containerId}">
+                <p><strong>Câu ${qIndex + 1}:</strong> ${escapeHtml(q.question)}</p>
+                <div class="quiz-options">
+                  ${q.options.map((opt, optIndex) => `
+                    <button class="quiz-option" onclick="checkAnswer('${escapeHtml(card.lesson_id)}', ${qIndex}, ${optIndex}, ${q.correct}, '${escapeHtml(q.explanation)}')">
+                      ${escapeHtml(opt)}
+                    </button>
+                  `).join('')}
+                </div>
+                <div class="quiz-feedback" style="display: none;"></div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } else {
+    const nontechBlocks = [
+      'Nói như người thường',
+      'Vấn đề thật nếu không hiểu khái niệm này',
+      'Minh họa trực quan',
+      'Code tối giản',
+      'Dùng trong app AI thật',
+    ];
+    nontechHtml = `
+      <h3>Học kiểu non-tech</h3>
+      <div class="nontech-grid">
+        ${nontechBlocks.map((block) => `<div class="nontech-card"><strong>${escapeHtml(block)}</strong><span class="detail-muted">Phase A mới dựng khung. Phase B sẽ tạo nội dung.</span></div>`).join('')}
+      </div>
+    `;
+  }
 
   els.lessonDetail.innerHTML = `
     <p class="eyebrow">Chi tiết bài học</p>
@@ -108,18 +202,19 @@ function renderLessonDetail(lesson) {
       <span class="badge">${escapeHtml(lesson.lesson)}</span>
       <span class="badge">${escapeHtml(lesson.time || 'Chưa có thời lượng')}</span>
       <span class="badge">${escapeHtml(lesson.type || 'Chưa có type')}</span>
+      ${card ? `<span class="badge badge-success">Bản non-tech: ${escapeHtml(card.review_status)}</span>` : ''}
     </div>
-    <div class="detail-grid">
+    
+    ${nontechHtml}
+
+    <div class="detail-grid" style="margin-top: 2rem;">
       <div class="detail-box"><small>Languages</small>${escapeHtml((lesson.languages || []).join(', ') || 'Chưa khai báo')}</div>
       <div class="detail-box"><small>Prerequisites</small>${escapeHtml((lesson.prerequisites || []).join(', ') || 'Không có / chưa khai báo')}</div>
       <div class="detail-box"><small>Headings</small>${escapeHtml((lesson.headings || []).length)} mục</div>
       <div class="detail-box"><small>Code files</small>${escapeHtml((lesson.code_files || []).length)} file</div>
     </div>
-    <h3>Học kiểu non-tech</h3>
-    <div class="nontech-grid">
-      ${nontechBlocks.map((block) => `<div class="nontech-card"><strong>${escapeHtml(block)}</strong><span class="detail-muted">Phase A mới dựng khung. Phase B sẽ tạo nội dung.</span></div>`).join('')}
-    </div>
-    <h3>Headings trong lesson</h3>
+    
+    <h3>Headings trong lesson gốc</h3>
     <ul class="list-inline">
       ${(lesson.headings || []).slice(0, 14).map((heading) => `<li>H${escapeHtml(heading.level)} · ${escapeHtml(heading.text)}</li>`).join('') || '<li>Không có heading.</li>'}
     </ul>
@@ -149,12 +244,21 @@ function bindEvents() {
 async function init() {
   bindEvents();
   try {
-    const [lessonIndex, roadmapIndex] = await Promise.all([
+    const [lessonIndex, roadmapIndex, cardsData] = await Promise.all([
       loadJson('data/lessons.json'),
       loadJson('data/roadmap_12_weeks.json'),
+      loadJson('data/nontech-cards/cards.demo.json')
     ]);
-    state.lessons = lessonIndex.lessons || [];
-    state.roadmap = roadmapIndex.weeks || [];
+    
+    if (lessonIndex) state.lessons = lessonIndex.lessons || [];
+    if (roadmapIndex) state.roadmap = roadmapIndex.weeks || [];
+    
+    if (cardsData && cardsData.cards) {
+      cardsData.cards.forEach(card => {
+        state.cardsByLessonId[card.lesson_id] = card;
+      });
+    }
+
     renderStats();
     renderRoadmap();
     renderPhaseFilter();
