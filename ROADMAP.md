@@ -8,6 +8,12 @@ Total estimated time: ~314 hours, at your own pace.
 
 **Legend:** ✅ Complete &nbsp;·&nbsp; 🚧 In Progress &nbsp;·&nbsp; ⬚ Planned
 
+> [!WARNING]
+> Completion status is currently under re-audit. The roadmap headings preserve the
+> historical curriculum plan, but strict lesson-contract evidence currently shows
+> only 40/485 lessons have docs, quiz, runnable code, and code/tests present.
+> Run py scripts/roadmap_completion_audit.py for the current evidence report.
+
 ## Phase 0: Setup & Tooling — ✅ (~14 hours)
 
 | # | Lesson | Status | Est. |
@@ -538,6 +544,6 @@ Total estimated time: ~314 hours, at your own pace.
 
 ---
 
-**Total: 20 phases, 380+ lessons | 350+ complete | ~950 hours estimated**
+**Total: 20 phases, 485 lessons | strict audit: 40 complete, 445 incomplete | ~950 hours estimated**
 
 Want to help? Pick any ⬚ lesson and submit a PR. See [CONTRIBUTING.md](CONTRIBUTING.md).
