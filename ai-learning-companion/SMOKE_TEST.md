@@ -1,4 +1,4 @@
-﻿# AI Learning Companion MVP v0.1 Smoke Test
+# AI Learning Companion MVP v0.1 Smoke Test
 
 Manual checklist only. Do not treat this as an automated test script.
 
@@ -56,6 +56,17 @@ or citation path:
 - [ ] Confirm the app does not crash and displays a missing local tutor index
       fallback while other sections still render.
 - [ ] Restore `data/local_tutor_index.demo.json`.
+
+## C3 — Local AI Tutor Proxy (Optional)
+
+- [ ] Copy `ai_tutor_proxy/provider_config.example.json` to `ai_tutor_proxy/provider_config.local.json`.
+- [ ] Add dummy or real API keys to the local config.
+- [ ] Start the proxy: `python -m ai_tutor_proxy.server`
+- [ ] Test via cURL that the proxy falls back safely when keys are missing or invalid:
+  ```bash
+  curl -X POST http://127.0.0.1:8080/api/tutor/ask -H "Content-Type: application/json" -d '{"question": "AI là gì?", "privacy_mode": "public_curriculum_only"}'
+  ```
+- [ ] Verify the response includes citations, does not leak API keys, and has the correct `privacy_mode`.
 
 ## Final scope check
 

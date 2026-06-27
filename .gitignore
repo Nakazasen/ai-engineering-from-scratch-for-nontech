@@ -63,3 +63,5 @@ catalog.json
 !ai-learning-companion/data/nontech-cards/
 !ai-learning-companion/data/nontech-cards/cards.demo.json
 
+ai-learning-companion/ai_tutor_proxy/provider_config.local.json
+ai-learning-companion/ai_tutor_proxy/*.local.json

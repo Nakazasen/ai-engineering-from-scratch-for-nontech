@@ -1,0 +1,5 @@
+{
+  "ALC_GEMINI_API_KEY": "your_gemini_key_here",
+  "ALC_OPENAI_COMPATIBLE_API_KEY": "your_openai_or_openrouter_key_here",
+  "ALC_OPENAI_COMPATIBLE_BASE_URL": "https://api.openai.com/v1"
+}

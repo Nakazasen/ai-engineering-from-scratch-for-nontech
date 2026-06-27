@@ -78,13 +78,13 @@ Các file cấu hình Data mới:
 ### What is real
 
 - Static browser/local-server app.
-- 8 reviewed non-tech demo lesson cards.
+- 20 reviewed non-tech demo lesson cards.
 - Lesson player and quiz flow.
 - Browser-local progress memory via `localStorage` key `aiLearningCompanion.progress.v1`.
 - Vietnamese placement test and 3 learning tracks.
 - Track-aware dashboard.
 - Local Tutor using lexical/template search over local JSON with citations.
-- Local tutor index with 545 chunks.
+- Local tutor index with 629 chunks.
 - Citation/source display for lesson cards and tutor answers.
 - Learner progress stays in the browser and is not sent outside the local app.
 
@@ -100,7 +100,22 @@ Các file cấu hình Data mới:
 
 ### Known limitations
 
-- Full non-tech explanations exist only for the 8 demo lessons.
+- Full non-tech explanations exist only for the 20 demo lessons.
 - The curriculum index scans 485 lessons, but companion cards are not scaled to all lessons yet.
-- Local Tutor can cite lesson metadata broadly, but rich plain-language explanations come from the 8 demo cards.
+- Local Tutor can cite lesson metadata broadly, but rich plain-language explanations come from the 20 demo cards.
 - Running `scan_curriculum.py` updates `data/lessons.json` `generated_at`; revert that file if only timestamp changes before unrelated commits.
+
+### Optional Local AI Tutor Proxy (C3 MVP)
+
+An optional local Python proxy is available to enable AI provider integration without exposing API keys in the browser. 
+
+To run the proxy:
+```bash
+cp ai_tutor_proxy/provider_config.example.json ai_tutor_proxy/provider_config.local.json
+# Edit your keys in provider_config.local.json
+python -m ai_tutor_proxy.server
+```
+The server will run on port 8080. You can test it via curl:
+```bash
+curl -X POST http://127.0.0.1:8080/api/tutor/ask -H "Content-Type: application/json" -d '{"question": "AI là gì?", "privacy_mode": "public_curriculum_only"}'
+```
