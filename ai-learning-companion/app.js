@@ -54,6 +54,7 @@ const els = {
   // C5 Daily Plan
   dailyPlan: document.querySelector('#dailyPlan'),
   dailyPlanContent: document.querySelector('#dailyPlanContent'),
+  checkpointStatusBadge: document.querySelector('#checkpointStatusBadge'),
 };
 
 // --- Progress Logic (Gate B2) ---
@@ -183,6 +184,25 @@ function updateDashboard() {
   els.progReview.textContent = review;
   
   if (els.totalLessonsInTrack) els.totalLessonsInTrack.textContent = totalInTrack;
+  
+  if (els.checkpointStatusBadge) {
+    let checkpointStatus = 'Chưa sẵn sàng';
+    let badgeClass = 'badge-completed';
+    
+    if (review > 0) {
+      checkpointStatus = 'Ôn lại trước';
+      badgeClass = 'badge-review';
+    } else if (completed >= 3) {
+      checkpointStatus = 'Sẵn sàng kiểm tra nhỏ';
+      badgeClass = 'badge-tutor';
+    } else {
+      checkpointStatus = 'Chưa sẵn sàng';
+      badgeClass = 'badge-completed';
+    }
+    
+    els.checkpointStatusBadge.textContent = checkpointStatus;
+    els.checkpointStatusBadge.className = `daily-plan-badge ${badgeClass}`;
+  }
   
   els.btnStartLearning.onclick = () => {
     // scroll to lesson section
@@ -353,6 +373,24 @@ function renderDailyStudyPlan() {
   
   // Card 2: Review Card
   if (reviewLesson) {
+    const lProg = state.progress.lessons[reviewLesson.id];
+    const attempts = lProg?.quiz_attempts || [];
+    const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+    
+    let reasonText = "Có phần quiz chưa đạt điểm tối đa hoặc được bạn đánh dấu cần xem lại.";
+    let scoreInfoHtml = '';
+    
+    if (latestAttempt) {
+      const score = latestAttempt.score;
+      const total = latestAttempt.total;
+      reasonText = `Bạn còn sai ${total - score} câu, nên ôn lại phần giải thích trước khi học tiếp.`;
+      scoreInfoHtml = `
+        <div class="daily-plan-score-info" style="margin-bottom: 8px; font-size: 0.9em; font-weight: bold; color: #f87171;">
+          Lần làm gần nhất: ${score}/${total}
+        </div>
+      `;
+    }
+    
     html += `
       <div class="daily-plan-card review-card">
         <div class="daily-plan-header">
@@ -360,7 +398,8 @@ function renderDailyStudyPlan() {
           <span class="daily-plan-time">⏱️ 5-10 phút</span>
         </div>
         <h3 class="daily-plan-title">${escapeHtml(reviewLesson.title)}</h3>
-        <p class="daily-plan-reason">Có phần quiz chưa đạt điểm tối đa hoặc được bạn đánh dấu cần xem lại.</p>
+        ${scoreInfoHtml}
+        <p class="daily-plan-reason">${escapeHtml(reasonText)}</p>
         <div class="daily-plan-actions">
           <button class="button secondary" onclick="openLessonFromDailyPlan('${escapeHtml(reviewLesson.id)}')">Ôn tập bài này</button>
         </div>
@@ -572,6 +611,16 @@ window.markStatus = function(lessonId, status) {
   renderLessonDetail(state.lessons.find(l => l.id === lessonId));
 };
 
+window.retryQuiz = function(lessonId) {
+  if (state.progress.lessons[lessonId]) {
+    state.progress.lessons[lessonId].status = 'started';
+    state.progress.lessons[lessonId].quiz_attempts = [];
+    delete state.progress.lessons[lessonId].completed_at;
+    saveProgress();
+    renderLessonDetail(state.lessons.find(l => l.id === lessonId));
+  }
+};
+
 function renderLessonDetail(lesson) {
   if (!lesson) {
     els.lessonDetail.innerHTML = '<p class="empty-state">Chọn một lesson để xem chi tiết.</p>';
@@ -588,6 +637,56 @@ function renderLessonDetail(lesson) {
     
     const safeId = lesson.id.replace(/[^a-zA-Z0-9]/g, '-');
     const lProg = state.progress.lessons[lesson.id];
+    
+    // C6C Quiz Feedback Logic
+    const attempts = lProg?.quiz_attempts || [];
+    const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+    
+    let feedbackHtml = '';
+    let feedbackClass = '';
+    if (latestAttempt) {
+      const score = latestAttempt.score;
+      const total = latestAttempt.total;
+      const isPerfect = score === total && total > 0;
+      feedbackClass = isPerfect ? 'feedback-correct' : 'feedback-incorrect';
+      
+      const suggestion = isPerfect 
+        ? "🎉 Xuất sắc! Bạn đã trả lời đúng tất cả câu hỏi và có thể tiếp tục học bài tiếp theo."
+        : `💡 Bạn trả lời đúng ${score}/${total} câu. Bạn cần ôn lại bài học này trước khi tiếp tục.`;
+        
+      feedbackHtml += `<strong>Điểm số: ${score}/${total}</strong><br>${suggestion}`;
+      
+      if (!isPerfect) {
+        feedbackHtml += `<div class="quiz-feedback-details" style="margin-top: 12px; text-align: left; border-top: 1px solid var(--line); padding-top: 8px;">`;
+        feedbackHtml += `<h5 style="margin: 8px 0; color: var(--accent-2); font-size: 0.95em;">Chi tiết câu trả lời chưa đúng:</h5>`;
+        
+        card.check_questions.forEach((q, qIndex) => {
+          const userAns = latestAttempt.answers[qIndex];
+          if (userAns !== q.correct) {
+            feedbackHtml += `
+              <div class="feedback-detail-item" style="margin-bottom: 12px; font-size: 0.9em; padding-left: 8px; border-left: 2px solid var(--accent-2);">
+                <p style="margin: 0 0 4px 0;"><strong>Câu ${qIndex + 1}: ${escapeHtml(q.question)}</strong></p>
+                <p style="margin: 0 0 2px 0; color: #f87171;">❌ Bạn chọn: ${userAns >= 0 ? escapeHtml(q.options[userAns]) : "Chưa trả lời"}</p>
+                <p style="margin: 0 0 4px 0; color: #34d399;">👉 Đáp án đúng: ${escapeHtml(q.options[q.correct])}</p>
+                <p style="margin: 0; font-style: italic; color: var(--muted);">Giải thích: ${escapeHtml(q.explanation)}</p>
+              </div>
+            `;
+          }
+        });
+        
+        const suggestionText = buildTutorQuestionSuggestion(lesson);
+        feedbackHtml += `
+          <div class="tutor-suggest-block" style="margin-top: 16px; background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 8px; padding: 12px;">
+            <strong style="color: #f87171; display: block; margin-bottom: 4px;">⚠️ Ôn lại phần này</strong>
+            <p style="margin: 0 0 8px 0; font-size: 0.9em; color: var(--muted);">Bạn sai ${total - score} câu, nên ôn lại trước khi học bài tiếp theo.</p>
+            <p style="font-size: 0.85em; font-style: italic; background: rgba(255,255,255,0.03); border: 1px solid var(--line); padding: 8px; border-radius: 4px; margin: 0 0 8px 0;">"${escapeHtml(suggestionText)}"</p>
+            <button class="button secondary" style="padding: 6px 12px; font-size: 0.8em; width: auto;" data-question="${escapeHtml(suggestionText)}" onclick="fillTutorSuggestionFromDailyPlan(this.getAttribute('data-question'))">Hỏi gia sư về bài này</button>
+          </div>
+        `;
+        
+        feedbackHtml += `</div>`;
+      }
+    }
     
     nontechHtml = `
       <h3>Học kiểu non-tech</h3>
@@ -674,24 +773,40 @@ function renderLessonDetail(lesson) {
             <div class="quiz-form">
               ${(card.check_questions || []).map((q, qIndex) => {
                 const containerId = `quiz-${safeId}-${qIndex}`;
+                const userAns = latestAttempt ? latestAttempt.answers[qIndex] : -1;
                 return `
                   <div class="quiz-question" id="${containerId}">
                     <p><strong>Câu ${qIndex + 1}:</strong> ${escapeHtml(q.question)}</p>
                     <div class="quiz-options">
-                      ${q.options.map((opt, optIndex) => `
-                        <label class="quiz-option-label">
-                          <input type="radio" name="q_${escapeHtml(card.lesson_id)}_${qIndex}" value="${optIndex}">
-                          <span>${escapeHtml(opt)}</span>
-                        </label>
-                      `).join('')}
+                      ${q.options.map((opt, optIndex) => {
+                        let optionClass = '';
+                        if (latestAttempt) {
+                          if (optIndex === q.correct) {
+                            optionClass = 'correct';
+                          } else if (optIndex === userAns) {
+                            optionClass = 'incorrect';
+                          }
+                        }
+                        const isChecked = optIndex === userAns ? 'checked' : '';
+                        const isDisabled = latestAttempt ? 'disabled' : '';
+                        return `
+                          <label class="quiz-option-label ${optionClass}">
+                            <input type="radio" name="q_${escapeHtml(card.lesson_id)}_${qIndex}" value="${optIndex}" ${isChecked} ${isDisabled}>
+                            <span>${escapeHtml(opt)}</span>
+                          </label>
+                        `;
+                      }).join('')}
                     </div>
                   </div>
                 `;
               }).join('')}
               
               <div class="quiz-actions">
-                <button id="btn-submit-${safeId}" class="button primary" onclick="submitQuiz('${escapeHtml(card.lesson_id)}')">Nộp bài kiểm tra</button>
-                <div id="quiz-feedback-${safeId}" class="quiz-feedback" style="display: none;"></div>
+                <div style="display: flex; gap: 8px;">
+                  <button id="btn-submit-${safeId}" class="button primary" ${latestAttempt ? 'disabled' : ''} onclick="submitQuiz('${escapeHtml(card.lesson_id)}')">Nộp bài kiểm tra</button>
+                  ${latestAttempt ? `<button class="button secondary" style="width: auto;" onclick="retryQuiz('${escapeHtml(card.lesson_id)}')">Làm lại</button>` : ''}
+                </div>
+                <div id="quiz-feedback-${safeId}" class="quiz-feedback ${feedbackClass}" style="${latestAttempt ? 'display: block;' : 'display: none;'}">${feedbackHtml}</div>
               </div>
             </div>
           </div>

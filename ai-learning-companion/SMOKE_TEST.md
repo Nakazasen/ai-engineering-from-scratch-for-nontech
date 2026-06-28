@@ -104,6 +104,21 @@ Required checks:
 - [ ] No real API call is required.
 - [ ] No phases diff remains after validation.
 
+## C6 — Vòng lặp học tập & Đánh giá chặng
+
+- [ ] Submit a quiz with incorrect answers.
+- [ ] Confirm detailed feedback appears (question text, selected answer, correct answer, and explanation).
+- [ ] Confirm "Ôn lại phần này" block appears with tutor suggestion prompt and button.
+- [ ] Clicking "Hỏi gia sư về bài này" in quiz feedback fills query and scrolls to local tutor.
+- [ ] Confirm "Làm lại" button resets quiz status to started, clears previous attempts, and deletes completed_at metadata.
+- [ ] Daily study flow "Ôn lại" card shows "Lần làm gần nhất: X/Y" and "Bạn còn sai N câu..." if an attempt exists.
+- [ ] Progress dashboard shows checkpoint status ("Đánh giá chặng").
+- [ ] Verify checkpoint status changes: "Chưa sẵn sàng" (completed < 3), "Ôn lại trước" (completed >= 3 and has review), and "Sẵn sàng kiểm tra nhỏ" (completed >= 3 and 0 review).
+- [ ] Resetting progress resets checkpoint status badge to "Chưa sẵn sàng".
+- [ ] No real API call is required.
+- [ ] No phases diff remains after validation.
+
+
 ## Final scope check
 
 - [ ] Stop the local server.

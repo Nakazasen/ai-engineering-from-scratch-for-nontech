@@ -26,10 +26,10 @@ Sau đó mở trình duyệt tại `http://localhost:8000`.
    - **Track C (AI Engineer Từ Nền Tảng)**: Đi sâu vào cốt lõi toán học và nguyên lý Machine Learning.
    *(Lưu ý: Nếu có nhiều track trùng điểm, hệ thống ưu tiên theo thứ tự Track A > Track B > Track C).*
 3. **Học theo track:** Bấm **"Bắt đầu track của tôi"** hoặc **"Học tiếp theo track"** để học tuần tự các bài được thiết kế cho mục tiêu của bạn.
-4. **Buổi học hôm nay:** Sử dụng bảng **"Buổi học hôm nay"** để xem bài học đề xuất tiếp theo, bài cần ôn (nếu có bài bị đánh giá ⚠️ Cần ôn), và điền nhanh câu hỏi gợi ý cho Gia sư local. Toàn bộ tiến trình này hoạt động hoàn toàn offline cục bộ.
+4. **Buổi học hôm nay:** Sử dụng bảng **"Buổi học hôm nay"** để xem bài học đề xuất tiếp theo, bài cần ôn (nếu có bài bị đánh giá ⚠️ Cần ôn, kèm thông tin chi tiết về điểm số lần làm gần nhất), và điền nhanh câu hỏi gợi ý cho Gia sư local. Toàn bộ tiến trình này hoạt động hoàn toàn offline cục bộ.
 5. **Luồng học:** Đọc các phần được thiết kế riêng cho người non-tech (Mục tiêu, Vì sao cần hiểu, Ẩn dụ đời thường, Ví dụ tối giản...).
-6. **Làm bài kiểm tra (Quiz):** Ở cuối bài, hãy nộp bài kiểm tra. Nếu đạt 3/3 điểm, bài học sẽ tự động được đánh dấu ✅ Đã hiểu. Nếu chưa đạt, hãy làm theo gợi ý ⚠️ Cần ôn lại.
-7. **Xem tiến độ:** Bảng "Tiến độ học tập" trên cùng sẽ đếm số bài bạn đã học trong track hiện tại.
+6. **Làm bài kiểm tra (Quiz):** Ở cuối bài, hãy nộp bài kiểm tra. Nếu đạt 3/3 điểm, bài học sẽ tự động được đánh dấu ✅ Đã hiểu. Nếu chưa đạt, hãy làm theo gợi ý ⚠️ Cần ôn lại (ứng dụng hiển thị chi tiết các câu sai, đáp án đúng, giải thích nguyên nhân và đề xuất câu hỏi cho Gia sư). Bạn có thể bấm nút **"Làm lại"** để đặt bài học về trạng thái đang học và xóa lịch sử kiểm tra của riêng bài đó.
+7. **Xem tiến độ và Đánh giá chặng:** Bảng "Tiến độ học tập" trên cùng sẽ đếm số bài bạn đã học trong track hiện tại, kèm chỉ báo **Đánh giá chặng** hiển thị trạng thái chuẩn bị (Chưa sẵn sàng, Ôn lại trước, hoặc Sẵn sàng kiểm tra nhỏ khi hoàn thành >= 3 bài và không có bài cần ôn).
 8. **Xoá tiến độ (nếu muốn):** Bạn có thể bấm "Xóa tiến độ" để làm mới toàn bộ kết quả học và kết quả kiểm tra điểm bắt đầu của mình. Mọi tiến độ được lưu hoàn toàn cục bộ trên trình duyệt (không gửi ra ngoài).
 
 ## Dành cho Maintainer
