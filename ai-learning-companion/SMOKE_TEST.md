@@ -87,6 +87,20 @@ Required checks:
 - [ ] full lesson/card JSON is not sent
 - [ ] no phases diff
 - [ ] tests pass
+## C5 — Buổi học hôm nay
+
+- [ ] Static app opens.
+- [ ] Daily plan panel ("Buổi học hôm nay") is visible.
+- [ ] Before placement test (or after progress reset): panel recommends a safe beginner lesson (e.g. "Cài đặt môi trường học").
+- [ ] After placement test: panel recommends the next uncompleted lesson from the recommended track.
+- [ ] Recommended next lesson button opens the correct lesson.
+- [ ] If you complete a quiz and fail (getting "review" status), that lesson appears under the "Ôn lại" card.
+- [ ] The "Ôn bài cần xem lại" button opens the correct lesson to review.
+- [ ] The tutor suggestion card displays a question based on the recommended lesson.
+- [ ] Clicking "Điền câu hỏi" fills the question in the global "Gia sư local" textarea and scrolls down to it without auto-submitting.
+- [ ] Existing Gia sư local search still works.
+- [ ] Existing Gia sư AI local panel still works/falls back safely.
+- [ ] No API keys are used or leaked.
 
 ## Final scope check
 

@@ -50,6 +50,10 @@ const els = {
   btnTutorSearch: document.querySelector('#btnTutorSearch'),
   tutorAnswer: document.querySelector('#tutorAnswer'),
   tutorResults: document.querySelector('#tutorResults'),
+  
+  // C5 Daily Plan
+  dailyPlan: document.querySelector('#dailyPlan'),
+  dailyPlanContent: document.querySelector('#dailyPlanContent'),
 };
 
 // --- Progress Logic (Gate B2) ---
@@ -188,6 +192,215 @@ function updateDashboard() {
   
   els.btnResetProgress.onclick = resetProgress;
   if (els.btnTakePlacement) els.btnTakePlacement.onclick = openPlacementTest;
+  
+  // Render C5 daily plan
+  renderDailyStudyPlan();
+}
+
+// --- Daily Study Flow Logic (Gate C5) ---
+function findNextStudyLesson() {
+  const profile = state.progress.learner_profile;
+  const defaultFirstLesson = "00-setup-and-tooling/01-dev-environment";
+  
+  if (profile && profile.recommended_track && state.learningTracks && state.learningTracks[profile.recommended_track]) {
+    const track = state.learningTracks[profile.recommended_track];
+    const nextUncompletedId = track.lessons.find(id => {
+      const prog = state.progress.lessons[id];
+      return !prog || prog.status !== 'completed';
+    });
+    
+    if (nextUncompletedId) {
+      const lesson = state.lessons.find(l => l.id === nextUncompletedId);
+      if (lesson) {
+        return { lesson, reason: "Bài tiếp theo trong lộ trình track của bạn", status: state.progress.lessons[nextUncompletedId]?.status || 'not_started' };
+      }
+    }
+    
+    const allCompleted = track.lessons.every(id => state.progress.lessons[id]?.status === 'completed');
+    if (allCompleted) {
+      return { lesson: null, reason: "Chúc mừng! Bạn đã hoàn thành toàn bộ lộ trình này.", status: 'completed' };
+    }
+  }
+  
+  let targetLessonId = state.progress.last_opened_lesson_id;
+  if (!targetLessonId || state.progress.lessons[targetLessonId]?.status === 'completed') {
+    const nextDemoUncompleted = state.lessons.find(l => {
+      const hasCard = state.cardsByLessonId[l.id];
+      const prog = state.progress.lessons[l.id];
+      return hasCard && (!prog || prog.status !== 'completed');
+    });
+    targetLessonId = nextDemoUncompleted ? nextDemoUncompleted.id : defaultFirstLesson;
+  }
+  
+  const lesson = state.lessons.find(l => l.id === targetLessonId);
+  const status = state.progress.lessons[targetLessonId]?.status || 'not_started';
+  if (status === 'completed') {
+    return { lesson: null, reason: "Bạn đã hoàn thành các bài học demo hiện tại.", status: 'completed' };
+  }
+  
+  const reason = state.progress.last_opened_lesson_id 
+    ? "Bài học gần nhất bạn đang học dở" 
+    : "Bạn chưa làm placement, đây là bài bắt đầu an toàn";
+    
+  return { lesson, reason, status };
+}
+
+function findReviewLesson() {
+  const profile = state.progress.learner_profile;
+  let reviewLessonId = null;
+  
+  if (profile && profile.recommended_track && state.learningTracks && state.learningTracks[profile.recommended_track]) {
+    const track = state.learningTracks[profile.recommended_track];
+    reviewLessonId = track.lessons.find(id => {
+      const prog = state.progress.lessons[id];
+      return prog && prog.status === 'review';
+    });
+  }
+  
+  if (!reviewLessonId) {
+    for (const [id, prog] of Object.entries(state.progress.lessons)) {
+      if (prog && prog.status === 'review') {
+        reviewLessonId = id;
+        break;
+      }
+    }
+  }
+  
+  if (reviewLessonId) {
+    return state.lessons.find(l => l.id === reviewLessonId) || null;
+  }
+  return null;
+}
+
+function buildTutorQuestionSuggestion(lesson) {
+  if (!lesson) {
+    return "Hãy giải thích cách thiết lập môi trường lập trình AI bằng ví dụ đời thường.";
+  }
+  return `Tôi đang học bài "${lesson.title}". Hãy giải thích bằng ví dụ đời thường và cho tôi 3 ý chính cần nhớ.`;
+}
+
+window.openLessonFromDailyPlan = function(lessonId) {
+  const target = document.getElementById('lessons');
+  if (target) target.scrollIntoView({ behavior: 'smooth' });
+  selectLesson(lessonId);
+};
+
+window.fillTutorSuggestionFromDailyPlan = function(questionText) {
+  if (els.tutorQuestion) {
+    els.tutorQuestion.value = questionText;
+  }
+  const target = document.getElementById('localTutor');
+  if (target) target.scrollIntoView({ behavior: 'smooth' });
+};
+
+function renderDailyStudyPlan() {
+  if (!els.dailyPlan || !els.dailyPlanContent) return;
+  
+  const totalCards = Object.keys(state.cardsByLessonId).length;
+  if (totalCards === 0) {
+    els.dailyPlan.style.display = 'none';
+    return;
+  }
+  
+  els.dailyPlan.style.display = 'block';
+  
+  const nextPlan = findNextStudyLesson();
+  const reviewLesson = findReviewLesson();
+  
+  let html = '';
+  html += `<div class="daily-plan-grid">`;
+  
+  // Card 1: Recommended Next Lesson
+  if (nextPlan.lesson) {
+    let stateLabel = 'Bắt đầu';
+    if (nextPlan.status === 'started' || nextPlan.status === 'review') {
+      stateLabel = 'Tiếp tục';
+    }
+    html += `
+      <div class="daily-plan-card recommended-card">
+        <div class="daily-plan-header">
+          <span class="daily-plan-badge badge-primary">${stateLabel}</span>
+          <span class="daily-plan-time">⏱️ 10-15 phút</span>
+        </div>
+        <h3 class="daily-plan-title">${escapeHtml(nextPlan.lesson.title)}</h3>
+        <p class="daily-plan-reason">${escapeHtml(nextPlan.reason)}</p>
+        <div class="daily-plan-actions">
+          <button class="button primary" onclick="openLessonFromDailyPlan('${escapeHtml(nextPlan.lesson.id)}')">Học ngay</button>
+        </div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="daily-plan-card recommended-card completed">
+        <div class="daily-plan-header">
+          <span class="daily-plan-badge badge-completed">Hoàn thành</span>
+        </div>
+        <h3 class="daily-plan-title">Đã hoàn tất lộ trình</h3>
+        <p class="daily-plan-reason">${escapeHtml(nextPlan.reason)}</p>
+        <div class="daily-plan-actions">
+          <button class="button secondary" disabled>Đã hoàn thành</button>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Card 2: Review Card
+  if (reviewLesson) {
+    html += `
+      <div class="daily-plan-card review-card">
+        <div class="daily-plan-header">
+          <span class="daily-plan-badge badge-review">Ôn lại</span>
+          <span class="daily-plan-time">⏱️ 5-10 phút</span>
+        </div>
+        <h3 class="daily-plan-title">${escapeHtml(reviewLesson.title)}</h3>
+        <p class="daily-plan-reason">Có phần quiz chưa đạt điểm tối đa hoặc được bạn đánh dấu cần xem lại.</p>
+        <div class="daily-plan-actions">
+          <button class="button secondary" onclick="openLessonFromDailyPlan('${escapeHtml(reviewLesson.id)}')">Ôn tập bài này</button>
+        </div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="daily-plan-card review-card empty-review">
+        <div class="daily-plan-header">
+          <span class="daily-plan-badge badge-completed">Không có bài ôn</span>
+        </div>
+        <h3 class="daily-plan-title">Mọi thứ đều ổn</h3>
+        <p class="daily-plan-reason">Tuyệt vời! Hiện tại bạn không có bài học nào được đánh dấu cần ôn lại.</p>
+        <div class="daily-plan-actions">
+          <button class="button secondary" disabled>Sạch sẽ</button>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Card 3: Tutor suggestion Card
+  const targetLessonForTutor = nextPlan.lesson || reviewLesson || (state.lessons.length > 0 ? state.lessons[0] : null);
+  const suggestionText = buildTutorQuestionSuggestion(targetLessonForTutor);
+  
+  html += `
+    <div class="daily-plan-card tutor-card">
+      <div class="daily-plan-header">
+        <span class="daily-plan-badge badge-tutor">Hỏi Gia sư</span>
+        <span class="daily-plan-time">⏱️ 3-5 phút</span>
+      </div>
+      <h3 class="daily-plan-title" style="font-size: 0.95rem; font-style: italic;">"${escapeHtml(suggestionText)}"</h3>
+      <p class="daily-plan-reason">Điền câu hỏi gợi ý của bài học này vào khung hỏi đáp với Gia sư local.</p>
+      <div class="daily-plan-actions">
+        <button class="button secondary" data-question="${escapeHtml(suggestionText)}" onclick="fillTutorSuggestionFromDailyPlan(this.getAttribute('data-question'))">Điền câu hỏi</button>
+      </div>
+    </div>
+  `;
+  
+  html += `</div>`; // daily-plan-grid
+  
+  html += `
+    <div class="daily-plan-footer" style="margin-top: 16px; font-size: 0.9rem; color: var(--muted); text-align: center; border-top: 1px solid var(--line); padding-top: 12px;">
+      <span>💡 <strong>Thời lượng gợi ý:</strong> 20–30 phút mỗi ngày. Hãy duy trì thói quen học hằng ngày nhé!</span>
+    </div>
+  `;
+  
+  els.dailyPlanContent.innerHTML = html;
 }
 // ---------------------------------
 

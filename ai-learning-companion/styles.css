@@ -318,3 +318,103 @@ textarea:focus { border-color: var(--accent); }
 .ai-tutor-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
 .ai-tutor-route { margin-top: 12px; font-size: 0.85em; color: var(--muted); }
 .ai-tutor-fallback { border-left: 3px solid var(--accent-2); padding-left: 12px; }
+
+/* C5 Daily Study Flow Panel */
+.daily-plan-panel {
+  background: linear-gradient(135deg, rgba(8, 17, 31, 0.6), rgba(16, 31, 56, 0.4));
+  border: 1px solid var(--line);
+}
+.daily-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.daily-plan-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 180px;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+.daily-plan-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(125, 211, 252, 0.3);
+}
+.daily-plan-card.completed {
+  opacity: 0.85;
+}
+.daily-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.daily-plan-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+.badge-primary {
+  background: rgba(125, 211, 252, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.badge-review {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: #f87171;
+  color: #f87171;
+}
+.badge-tutor {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: var(--accent-3);
+  color: var(--accent-3);
+}
+.badge-completed {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: var(--accent-3);
+  color: var(--accent-3);
+}
+.daily-plan-time {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.daily-plan-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.daily-plan-reason {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+  flex-grow: 1;
+}
+.daily-plan-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: auto;
+}
+.daily-plan-actions button {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+}
+@media (max-width: 920px) {
+  .daily-plan-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
