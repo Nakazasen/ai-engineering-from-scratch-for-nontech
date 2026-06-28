@@ -97,10 +97,12 @@ Required checks:
 - [ ] If you complete a quiz and fail (getting "review" status), that lesson appears under the "Ôn lại" card.
 - [ ] The "Ôn bài cần xem lại" button opens the correct lesson to review.
 - [ ] The tutor suggestion card displays a question based on the recommended lesson.
-- [ ] Clicking "Điền câu hỏi" fills the question in the global "Gia sư local" textarea and scrolls down to it without auto-submitting.
+- [ ] Clicking "Hỏi gia sư về bài này" fills the question in the global "Gia sư local" textarea and scrolls down to it without auto-submitting.
 - [ ] Existing Gia sư local search still works.
 - [ ] Existing Gia sư AI local panel still works/falls back safely.
 - [ ] No API keys are used or leaked.
+- [ ] No real API call is required.
+- [ ] No phases diff remains after validation.
 
 ## Final scope check
 

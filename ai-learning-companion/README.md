@@ -28,9 +28,9 @@ Sau đó mở trình duyệt tại `http://localhost:8000`.
 3. **Học theo track:** Bấm **"Bắt đầu track của tôi"** hoặc **"Học tiếp theo track"** để học tuần tự các bài được thiết kế cho mục tiêu của bạn.
 4. **Buổi học hôm nay:** Sử dụng bảng **"Buổi học hôm nay"** để xem bài học đề xuất tiếp theo, bài cần ôn (nếu có bài bị đánh giá ⚠️ Cần ôn), và điền nhanh câu hỏi gợi ý cho Gia sư local. Toàn bộ tiến trình này hoạt động hoàn toàn offline cục bộ.
 5. **Luồng học:** Đọc các phần được thiết kế riêng cho người non-tech (Mục tiêu, Vì sao cần hiểu, Ẩn dụ đời thường, Ví dụ tối giản...).
-5. **Làm bài kiểm tra (Quiz):** Ở cuối bài, hãy nộp bài kiểm tra. Nếu đạt 3/3 điểm, bài học sẽ tự động được đánh dấu ✅ Đã hiểu. Nếu chưa đạt, hãy làm theo gợi ý ⚠️ Cần ôn lại.
-6. **Xem tiến độ:** Bảng "Tiến độ học tập" trên cùng sẽ đếm số bài bạn đã học trong track hiện tại.
-7. **Xoá tiến độ (nếu muốn):** Bạn có thể bấm "Xóa tiến độ" để làm mới toàn bộ kết quả học và kết quả kiểm tra điểm bắt đầu của mình. Mọi tiến độ được lưu hoàn toàn cục bộ trên trình duyệt (không gửi ra ngoài).
+6. **Làm bài kiểm tra (Quiz):** Ở cuối bài, hãy nộp bài kiểm tra. Nếu đạt 3/3 điểm, bài học sẽ tự động được đánh dấu ✅ Đã hiểu. Nếu chưa đạt, hãy làm theo gợi ý ⚠️ Cần ôn lại.
+7. **Xem tiến độ:** Bảng "Tiến độ học tập" trên cùng sẽ đếm số bài bạn đã học trong track hiện tại.
+8. **Xoá tiến độ (nếu muốn):** Bạn có thể bấm "Xóa tiến độ" để làm mới toàn bộ kết quả học và kết quả kiểm tra điểm bắt đầu của mình. Mọi tiến độ được lưu hoàn toàn cục bộ trên trình duyệt (không gửi ra ngoài).
 
 ## Dành cho Maintainer
 

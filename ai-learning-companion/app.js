@@ -204,21 +204,28 @@ function findNextStudyLesson() {
   
   if (profile && profile.recommended_track && state.learningTracks && state.learningTracks[profile.recommended_track]) {
     const track = state.learningTracks[profile.recommended_track];
-    const nextUncompletedId = track.lessons.find(id => {
-      const prog = state.progress.lessons[id];
-      return !prog || prog.status !== 'completed';
-    });
-    
-    if (nextUncompletedId) {
-      const lesson = state.lessons.find(l => l.id === nextUncompletedId);
-      if (lesson) {
-        return { lesson, reason: "Bài tiếp theo trong lộ trình track của bạn", status: state.progress.lessons[nextUncompletedId]?.status || 'not_started' };
+    const validTrackLessons = (track.lessons || [])
+      .map(id => state.lessons.find(l => l.id === id))
+      .filter(l => l !== undefined);
+      
+    if (validTrackLessons.length > 0) {
+      const nextUncompletedLesson = validTrackLessons.find(l => {
+        const prog = state.progress.lessons[l.id];
+        return !prog || prog.status !== 'completed';
+      });
+      
+      if (nextUncompletedLesson) {
+        return {
+          lesson: nextUncompletedLesson,
+          reason: "Bài tiếp theo trong lộ trình track của bạn",
+          status: state.progress.lessons[nextUncompletedLesson.id]?.status || 'not_started'
+        };
       }
-    }
-    
-    const allCompleted = track.lessons.every(id => state.progress.lessons[id]?.status === 'completed');
-    if (allCompleted) {
-      return { lesson: null, reason: "Chúc mừng! Bạn đã hoàn thành toàn bộ lộ trình này.", status: 'completed' };
+      
+      const allCompleted = validTrackLessons.every(l => state.progress.lessons[l.id]?.status === 'completed');
+      if (allCompleted) {
+        return { lesson: null, reason: "Chúc mừng! Bạn đã hoàn thành toàn bộ lộ trình này.", status: 'completed' };
+      }
     }
   }
   
@@ -325,7 +332,7 @@ function renderDailyStudyPlan() {
         <h3 class="daily-plan-title">${escapeHtml(nextPlan.lesson.title)}</h3>
         <p class="daily-plan-reason">${escapeHtml(nextPlan.reason)}</p>
         <div class="daily-plan-actions">
-          <button class="button primary" onclick="openLessonFromDailyPlan('${escapeHtml(nextPlan.lesson.id)}')">Học ngay</button>
+          <button class="button primary" onclick="openLessonFromDailyPlan('${escapeHtml(nextPlan.lesson.id)}')">Bắt đầu bài đề xuất</button>
         </div>
       </div>
     `;
@@ -387,7 +394,7 @@ function renderDailyStudyPlan() {
       <h3 class="daily-plan-title" style="font-size: 0.95rem; font-style: italic;">"${escapeHtml(suggestionText)}"</h3>
       <p class="daily-plan-reason">Điền câu hỏi gợi ý của bài học này vào khung hỏi đáp với Gia sư local.</p>
       <div class="daily-plan-actions">
-        <button class="button secondary" data-question="${escapeHtml(suggestionText)}" onclick="fillTutorSuggestionFromDailyPlan(this.getAttribute('data-question'))">Điền câu hỏi</button>
+        <button class="button secondary" data-question="${escapeHtml(suggestionText)}" onclick="fillTutorSuggestionFromDailyPlan(this.getAttribute('data-question'))">Hỏi gia sư về bài này</button>
       </div>
     </div>
   `;
