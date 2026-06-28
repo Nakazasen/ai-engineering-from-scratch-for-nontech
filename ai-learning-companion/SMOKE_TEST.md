@@ -60,7 +60,8 @@ or citation path:
 ## C3/C4 — Local AI Tutor Proxy (Optional)
 
 - [ ] Copy `ai_tutor_proxy/provider_config.example.json` to `ai_tutor_proxy/provider_config.local.json`.
-- [ ] Add dummy or real API keys to the local config.
+- [ ] Add dummy API keys to the local config (e.g. `mock_key` or `dummy_value`) to verify the mock provider configuration.
+- [ ] Do **NOT** use or configure real API keys for normal release smoke testing. Testing real provider calls is an optional advanced manual test only.
 - [ ] Start the proxy: `python -m ai_tutor_proxy.server`
 - [ ] Test via cURL that the proxy falls back safely when keys are missing or invalid:
   ```bash
@@ -70,11 +71,22 @@ or citation path:
 
 ## C4 — Local AI Tutor Proxy UI
 
-- [ ] In the browser, open a lesson detail page.
-- [ ] Ensure the proxy is NOT running. Ask a question and verify the UI shows the offline fallback message gracefully.
-- [ ] Start the proxy. Ask a question and verify it returns a valid response.
-- [ ] Test the privacy modes: `local_only`, `public_curriculum_only`, `learner_context_allowed`.
-- [ ] Confirm no API key fields or credential forms are added to the browser UI.
+Required checks:
+- [ ] Static app opens at http://127.0.0.1:8000
+- [ ] Existing Gia sư local still works with proxy stopped
+- [ ] Lesson detail shows Gia sư AI local panel
+- [ ] Default privacy mode is local_only
+- [ ] No API key input exists in browser
+- [ ] Browser localStorage/sessionStorage does not contain API key/provider config
+- [ ] Proxy stopped: AI Tutor panel shows fallback message and local lexical answer
+- [ ] Proxy running: local_only returns local_lexical
+- [ ] public_curriculum_only without keys does not crash
+- [ ] learner_context_allowed sends summary only
+- [ ] raw localStorage is not sent
+- [ ] full state.progress is not sent
+- [ ] full lesson/card JSON is not sent
+- [ ] no phases diff
+- [ ] tests pass
 
 ## Final scope check
 

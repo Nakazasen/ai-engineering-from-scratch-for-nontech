@@ -882,23 +882,27 @@ function escapeAiTutorResponseFields(resp) {
   };
 }
 
-function runAiTutorLexicalFallback(question, containerId) {
+function runAiTutorLexicalFallback(question, containerId, customAlertHtml = '') {
   const container = document.getElementById(containerId);
   if (!container) return;
   
   const results = searchTutor(question);
   const answerHtml = buildTutorAnswer(question, results);
   
+  const alertHtml = customAlertHtml || `
+    <p class="detail-muted" style="margin-top: 8px; margin-bottom: 16px;">Proxy local chưa chạy hoặc không phản hồi. App đã dùng Gia sư local không gọi AI.</p>
+    <div class="proxy-start-command">
+      <small>Để bật AI Tutor proxy, mở terminal ở repo root và chạy:</small>
+      <code>$env:PYTHONPATH="ai-learning-companion"<br>py -m ai_tutor_proxy.server</code>
+    </div>
+  `;
+  
   container.innerHTML = `
     <div class="ai-tutor-fallback">
       <div class="ai-tutor-badge-row" style="margin-bottom: 8px;">
         <span class="badge ai-tutor-badge">Đã trả lời bằng fallback local</span>
       </div>
-      <p class="detail-muted" style="margin-top: 8px; margin-bottom: 16px;">Proxy local chưa chạy hoặc không phản hồi. App đã dùng Gia sư local không gọi AI.</p>
-      <div class="proxy-start-command">
-        <small>Để bật AI Tutor proxy, mở terminal ở repo root và chạy:</small>
-        <code>$env:PYTHONPATH="ai-learning-companion"<br>py -m ai_tutor_proxy.server</code>
-      </div>
+      ${alertHtml}
       <div class="ai-tutor-answer-content" style="margin-top: 16px;">
         ${answerHtml}
       </div>
@@ -906,13 +910,13 @@ function runAiTutorLexicalFallback(question, containerId) {
   `;
 }
 
-function renderAiTutorOfflineFallback(question, error, containerId) {
+function renderAiTutorOfflineFallback(question, error, containerId, customAlertHtml = '') {
   const container = document.getElementById(containerId);
   if (container) {
     container.classList.remove('loading');
     container.style.display = 'block';
   }
-  runAiTutorLexicalFallback(question, containerId);
+  runAiTutorLexicalFallback(question, containerId, customAlertHtml);
 }
 
 function renderAiTutorRoute(routeLog) {
@@ -1014,8 +1018,8 @@ async function askAiTutor(lessonId) {
       container.innerHTML = '<p class="ai-tutor-error">Câu hỏi chưa hợp lệ. Vui lòng nhập lại.</p>';
       return;
     } else if (response.status === 500) {
-      container.innerHTML = '<p class="ai-tutor-error" style="margin-bottom: 12px;">Proxy gặp lỗi nội bộ. App đã dùng Gia sư local để không làm gián đoạn bài học.</p>';
-      renderAiTutorOfflineFallback(question, new Error('Server 500'), containerId);
+      const errorMsgHtml = '<p class="ai-tutor-error" style="margin-bottom: 12px;">Proxy gặp lỗi nội bộ. App đã dùng Gia sư local để không làm gián đoạn bài học.</p>';
+      renderAiTutorOfflineFallback(question, new Error('Server 500'), containerId, errorMsgHtml);
       return;
     } else if (!response.ok) {
       throw new Error(`HTTP error ${response.status}`);

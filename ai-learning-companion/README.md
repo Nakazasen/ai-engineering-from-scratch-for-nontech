@@ -118,8 +118,8 @@ python -m ai_tutor_proxy.server
 ```
 The server will run on port 8080. 
 
-Note: You do **not** need API keys to use the `local_only` privacy mode.
-If you want to use real AI providers later:
+Note: You do **not** need API keys to use the `local_only` privacy mode, and normal release smoke tests should be run without configuring real API keys.
+If you want to use real AI providers for optional advanced testing:
 1. Copy `ai_tutor_proxy/provider_config.example.json` to `ai_tutor_proxy/provider_config.local.json`.
 2. Edit your keys in `provider_config.local.json`.
-3. Never paste your API keys into the browser.
+3. Never paste your API keys into the browser. API keys must only remain in local configuration or environment variables.

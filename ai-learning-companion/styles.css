@@ -313,3 +313,8 @@ textarea:focus { border-color: var(--accent); }
 .proxy-start-command { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; border: 1px dashed var(--line); margin-top: 12px; }
 .proxy-start-command code { display: block; color: var(--accent-3); font-family: monospace; font-size: 0.9em; margin-top: 6px; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+.privacy-warning { color: #f87171; font-size: 0.85em; margin-top: 6px; }
+.ai-tutor-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.ai-tutor-route { margin-top: 12px; font-size: 0.85em; color: var(--muted); }
+.ai-tutor-fallback { border-left: 3px solid var(--accent-2); padding-left: 12px; }
