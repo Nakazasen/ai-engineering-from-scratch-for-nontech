@@ -57,7 +57,7 @@ or citation path:
       fallback while other sections still render.
 - [ ] Restore `data/local_tutor_index.demo.json`.
 
-## C3 — Local AI Tutor Proxy (Optional)
+## C3/C4 — Local AI Tutor Proxy (Optional)
 
 - [ ] Copy `ai_tutor_proxy/provider_config.example.json` to `ai_tutor_proxy/provider_config.local.json`.
 - [ ] Add dummy or real API keys to the local config.
@@ -67,6 +67,14 @@ or citation path:
   curl -X POST http://127.0.0.1:8080/api/tutor/ask -H "Content-Type: application/json" -d '{"question": "AI là gì?", "privacy_mode": "public_curriculum_only"}'
   ```
 - [ ] Verify the response includes citations, does not leak API keys, and has the correct `privacy_mode`.
+
+## C4 — Local AI Tutor Proxy UI
+
+- [ ] In the browser, open a lesson detail page.
+- [ ] Ensure the proxy is NOT running. Ask a question and verify the UI shows the offline fallback message gracefully.
+- [ ] Start the proxy. Ask a question and verify it returns a valid response.
+- [ ] Test the privacy modes: `local_only`, `public_curriculum_only`, `learner_context_allowed`.
+- [ ] Confirm no API key fields or credential forms are added to the browser UI.
 
 ## Final scope check
 

@@ -105,17 +105,21 @@ Các file cấu hình Data mới:
 - Local Tutor can cite lesson metadata broadly, but rich plain-language explanations come from the 20 demo cards.
 - Running `scan_curriculum.py` updates `data/lessons.json` `generated_at`; revert that file if only timestamp changes before unrelated commits.
 
-### Optional Local AI Tutor Proxy (C3 MVP)
+### Optional Local AI Tutor Proxy (C3/C4 MVP)
 
 An optional local Python proxy is available to enable AI provider integration without exposing API keys in the browser. 
 
-To run the proxy:
-```bash
-cp ai_tutor_proxy/provider_config.example.json ai_tutor_proxy/provider_config.local.json
-# Edit your keys in provider_config.local.json
+The **Gia sư local** feature in the frontend app works entirely offline without this proxy. However, to use the in-lesson **Gia sư AI local**, you must start the proxy.
+
+To start the proxy:
+```powershell
+$env:PYTHONPATH="ai-learning-companion"
 python -m ai_tutor_proxy.server
 ```
-The server will run on port 8080. You can test it via curl:
-```bash
-curl -X POST http://127.0.0.1:8080/api/tutor/ask -H "Content-Type: application/json" -d '{"question": "AI là gì?", "privacy_mode": "public_curriculum_only"}'
-```
+The server will run on port 8080. 
+
+Note: You do **not** need API keys to use the `local_only` privacy mode.
+If you want to use real AI providers later:
+1. Copy `ai_tutor_proxy/provider_config.example.json` to `ai_tutor_proxy/provider_config.local.json`.
+2. Edit your keys in `provider_config.local.json`.
+3. Never paste your API keys into the browser.

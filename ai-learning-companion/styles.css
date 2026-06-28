@@ -294,3 +294,22 @@ textarea:focus { border-color: var(--accent); }
   .progress-stats, .progress-actions, .dashboard-actions-top { flex-direction: column; width: 100%; }
   .tutor-search-box, .tutor-results { grid-template-columns: 1fr; }
 }
+
+/* C4 AI Tutor Proxy */
+.ai-tutor-panel { background: rgba(8, 17, 31, 0.4); border: 1px solid var(--line); border-radius: 20px; padding: 24px; }
+.ai-tutor-controls { margin-top: 16px; }
+.ai-tutor-question { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: rgba(255,255,255,0.05); color: var(--text); font: inherit; outline: none; margin-bottom: 16px; resize: vertical; }
+.ai-tutor-question:focus { border-color: var(--accent); }
+.privacy-mode-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.privacy-mode-card { display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 12px; padding: 14px; cursor: pointer; transition: all 0.2s ease; }
+.privacy-mode-card:hover { border-color: rgba(125, 211, 252, 0.4); background: rgba(255,255,255,0.06); }
+.privacy-mode-card input { margin-top: 4px; }
+.privacy-text strong { display: block; margin-bottom: 4px; color: var(--text); font-size: 0.95em; }
+.privacy-text small { color: var(--muted); font-size: 0.85em; line-height: 1.4; display: block; }
+.ai-tutor-result { margin-top: 20px; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: rgba(8, 17, 31, 0.6); }
+.ai-tutor-result.loading { opacity: 0.7; animation: pulse 1.5s infinite; }
+.ai-tutor-badge { font-size: 0.8em; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.1); color: var(--accent); }
+.ai-tutor-error { color: #f87171; background: rgba(248, 113, 113, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(248, 113, 113, 0.2); }
+.proxy-start-command { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; border: 1px dashed var(--line); margin-top: 12px; }
+.proxy-start-command code { display: block; color: var(--accent-3); font-family: monospace; font-size: 0.9em; margin-top: 6px; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }

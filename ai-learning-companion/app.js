@@ -7,6 +7,7 @@ const state = {
   localTutorChunks: [],
   localTutorReady: false,
   selectedLessonId: null,
+  aiTutorProxyUrl: 'http://127.0.0.1:8080/api/tutor/ask',
   progress: {
     version: 1,
     last_opened_lesson_id: null,
@@ -14,7 +15,6 @@ const state = {
     lessons: {}
   }
 };
-
 const PROGRESS_KEY = 'aiLearningCompanion.progress.v1';
 
 const els = {
@@ -526,6 +526,48 @@ function renderLessonDetail(lesson) {
     
     ${nontechHtml}
 
+    <div class="ai-tutor-panel" style="margin-top: 2rem;">
+      <div class="section-heading" style="margin-bottom: 12px;">
+        <p class="eyebrow">Gia sư AI local</p>
+        <h3 style="margin-top: 0;">Hỏi gia sư AI</h3>
+        <p class="detail-muted">Hỏi một câu ngắn về bài đang học. Nếu proxy chưa chạy, app sẽ dùng Gia sư local hiện có.</p>
+        <p class="privacy-warning" style="color: #f87171; font-size: 0.85em; margin-top: 6px;">Không nhập API key vào trình duyệt. API key chỉ được cấu hình trong local proxy trên máy của bạn.</p>
+      </div>
+      
+      <div class="ai-tutor-controls">
+        <textarea id="aiTutorQuestion-${lesson.id.replace(/[^a-zA-Z0-9]/g, '-')}" class="ai-tutor-question" rows="2" placeholder="Nhập câu hỏi của bạn..."></textarea>
+        
+        <div class="privacy-mode-grid">
+          <label class="privacy-mode-card">
+            <input type="radio" name="privacy_${lesson.id.replace(/[^a-zA-Z0-9]/g, '-')}" value="local_only" checked>
+            <div class="privacy-text">
+              <strong>Chỉ tìm trong máy — không gửi ra AI</strong>
+              <small>An toàn nhất. Proxy chỉ dùng tìm kiếm local/fallback, không gọi provider AI.</small>
+            </div>
+          </label>
+          <label class="privacy-mode-card">
+            <input type="radio" name="privacy_${lesson.id.replace(/[^a-zA-Z0-9]/g, '-')}" value="public_curriculum_only">
+            <div class="privacy-text">
+              <strong>Hỏi AI bằng nội dung bài học công khai</strong>
+              <small>Chỉ gửi câu hỏi và phần curriculum được truy xuất. Không gửi tiến độ học cá nhân.</small>
+            </div>
+          </label>
+          <label class="privacy-mode-card">
+            <input type="radio" name="privacy_${lesson.id.replace(/[^a-zA-Z0-9]/g, '-')}" value="learner_context_allowed">
+            <div class="privacy-text">
+              <strong>Cho AI biết tiến độ học tóm tắt của tôi</strong>
+              <small>Chỉ gửi tóm tắt: bài hiện tại, track, bài đã hoàn thành, điểm quiz rút gọn.</small>
+            </div>
+          </label>
+        </div>
+        
+        <div class="ai-tutor-actions">
+          <button class="button primary" onclick="askAiTutor('${escapeHtml(lesson.id)}')">Hỏi gia sư AI</button>
+        </div>
+        <div id="aiTutorResult-${lesson.id.replace(/[^a-zA-Z0-9]/g, '-')}" class="ai-tutor-result" style="display: none;"></div>
+      </div>
+    </div>
+
     <div class="detail-grid" style="margin-top: 2rem;">
       <div class="detail-box"><small>Languages</small>${escapeHtml((lesson.languages || []).join(', ') || 'Chưa khai báo')}</div>
       <div class="detail-box"><small>Prerequisites</small>${escapeHtml((lesson.prerequisites || []).join(', ') || 'Không có / chưa khai báo')}</div>
@@ -771,6 +813,223 @@ function runTutorSearch() {
   els.tutorAnswer.innerHTML = buildTutorAnswer(query, results);
   renderTutorResults(results);
 }
+// ----------------------------
+
+// --- C4 AI Tutor Proxy Integration ---
+
+function getCurrentTrackId() {
+  return state.progress.learner_profile?.recommended_track || null;
+}
+
+function buildLearnerContextSummary(privacyMode, lessonId) {
+  if (privacyMode !== "learner_context_allowed") return undefined;
+  
+  const completed_lessons = [];
+  const quiz_scores = [];
+  
+  // Extract up to 20 completed lessons and quiz scores
+  for (const [id, lProg] of Object.entries(state.progress.lessons)) {
+    if (lProg.status === 'completed') {
+      completed_lessons.push(id);
+    }
+    if (lProg.quiz_attempts && lProg.quiz_attempts.length > 0) {
+      const latest = lProg.quiz_attempts[lProg.quiz_attempts.length - 1];
+      quiz_scores.push({
+        lesson_id: id,
+        latest_score: latest.score,
+        latest_total: latest.total
+      });
+    }
+  }
+  
+  return {
+    current_lesson_id: lessonId,
+    track_id: getCurrentTrackId(),
+    completed_lessons: completed_lessons.slice(-20),
+    quiz_scores: quiz_scores.slice(-20)
+  };
+}
+
+function buildAiTutorPayload(question, privacyMode, lessonId) {
+  const payload = {
+    question: question,
+    privacy_mode: privacyMode,
+    lesson_id: lessonId,
+    track_id: getCurrentTrackId()
+  };
+  
+  const learnerContext = buildLearnerContextSummary(privacyMode, lessonId);
+  if (learnerContext) {
+    payload.learner_context = learnerContext;
+  }
+  
+  return payload;
+}
+
+function escapeAiTutorResponseFields(resp) {
+  return {
+    status: escapeHtml(resp.status),
+    answer_text: escapeHtml(resp.answer_text),
+    provider_id: escapeHtml(resp.provider_id || resp.used_provider),
+    privacy_mode: escapeHtml(resp.privacy_mode),
+    citations: (resp.citations || []).map(escapeHtml),
+    route_log: (resp.route_log || []).map(log => ({
+      provider_id: escapeHtml(log.provider_id),
+      status: escapeHtml(log.status),
+      reason: escapeHtml(log.reason),
+      error_type: escapeHtml(log.error_type)
+    }))
+  };
+}
+
+function runAiTutorLexicalFallback(question, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  const results = searchTutor(question);
+  const answerHtml = buildTutorAnswer(question, results);
+  
+  container.innerHTML = `
+    <div class="ai-tutor-fallback">
+      <div class="ai-tutor-badge-row" style="margin-bottom: 8px;">
+        <span class="badge ai-tutor-badge">Đã trả lời bằng fallback local</span>
+      </div>
+      <p class="detail-muted" style="margin-top: 8px; margin-bottom: 16px;">Proxy local chưa chạy hoặc không phản hồi. App đã dùng Gia sư local không gọi AI.</p>
+      <div class="proxy-start-command">
+        <small>Để bật AI Tutor proxy, mở terminal ở repo root và chạy:</small>
+        <code>$env:PYTHONPATH="ai-learning-companion"<br>py -m ai_tutor_proxy.server</code>
+      </div>
+      <div class="ai-tutor-answer-content" style="margin-top: 16px;">
+        ${answerHtml}
+      </div>
+    </div>
+  `;
+}
+
+function renderAiTutorOfflineFallback(question, error, containerId) {
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.classList.remove('loading');
+    container.style.display = 'block';
+  }
+  runAiTutorLexicalFallback(question, containerId);
+}
+
+function renderAiTutorRoute(routeLog) {
+  if (!routeLog || routeLog.length === 0) return '';
+  const latest = routeLog[routeLog.length - 1];
+  const reason = latest.reason || latest.status || latest.error_type || 'unknown';
+  return `Đường đi: ${latest.provider_id} · ${reason}`;
+}
+
+function renderAiTutorResponse(resp, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  container.classList.remove('loading');
+  container.style.display = 'block';
+  
+  const safeResp = escapeAiTutorResponseFields(resp);
+  
+  let providerLabel = safeResp.provider_id;
+  if (providerLabel === 'local_lexical') providerLabel = 'Fallback local';
+  else if (providerLabel === 'mock') providerLabel = 'Mock provider — kiểm thử, không gọi API thật';
+  else if (providerLabel === 'gemini') providerLabel = 'Provider: Gemini';
+  else if (providerLabel === 'openai_compatible') providerLabel = 'Provider: OpenAI-compatible';
+  
+  const formattedAnswer = safeResp.answer_text.replace(/\n/g, '<br>');
+  
+  const citationsHtml = safeResp.citations.length > 0 
+    ? `<div style="margin-top: 12px;"><small class="detail-muted">Nguồn: ${safeResp.citations.join(', ')}</small></div>` 
+    : '';
+
+  container.innerHTML = `
+    <div class="ai-tutor-response-box">
+      <div class="ai-tutor-badge-row" style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <span class="badge ai-tutor-badge">${providerLabel}</span>
+        <span class="badge ai-tutor-badge">Mode: ${safeResp.privacy_mode}</span>
+      </div>
+      <div class="ai-tutor-answer-content" style="line-height: 1.6;">
+        ${formattedAnswer}
+      </div>
+      ${citationsHtml}
+      <div class="ai-tutor-route" style="margin-top: 12px; font-size: 0.85em; color: var(--muted);">
+        ${renderAiTutorRoute(safeResp.route_log)}
+      </div>
+    </div>
+  `;
+}
+
+async function askAiTutor(lessonId) {
+  const safeId = lessonId.replace(/[^a-zA-Z0-9]/g, '-');
+  const questionEl = document.getElementById(`aiTutorQuestion-${safeId}`);
+  const containerId = `aiTutorResult-${safeId}`;
+  const container = document.getElementById(containerId);
+  
+  if (!questionEl || !container) return;
+  
+  const question = questionEl.value.trim();
+  if (!question) {
+    container.style.display = 'block';
+    container.innerHTML = '<p class="ai-tutor-error">Nhập một câu hỏi ngắn trước khi hỏi gia sư.</p>';
+    return;
+  }
+  
+  const privacyRadios = document.getElementsByName(`privacy_${safeId}`);
+  let privacyMode = 'local_only';
+  for (const radio of privacyRadios) {
+    if (radio.checked) {
+      privacyMode = radio.value;
+      break;
+    }
+  }
+  
+  if (!['local_only', 'public_curriculum_only', 'learner_context_allowed'].includes(privacyMode)) {
+    privacyMode = 'local_only';
+  }
+  
+  container.style.display = 'block';
+  container.classList.add('loading');
+  container.innerHTML = '<p>Đang xử lý...</p>';
+  
+  const payload = buildAiTutorPayload(question, privacyMode, lessonId);
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  
+  try {
+    const response = await fetch(state.aiTutorProxyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (response.status === 400) {
+      container.classList.remove('loading');
+      container.innerHTML = '<p class="ai-tutor-error">Câu hỏi chưa hợp lệ. Vui lòng nhập lại.</p>';
+      return;
+    } else if (response.status === 500) {
+      container.innerHTML = '<p class="ai-tutor-error" style="margin-bottom: 12px;">Proxy gặp lỗi nội bộ. App đã dùng Gia sư local để không làm gián đoạn bài học.</p>';
+      renderAiTutorOfflineFallback(question, new Error('Server 500'), containerId);
+      return;
+    } else if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+    
+    const data = await response.json();
+    renderAiTutorResponse(data, containerId);
+    
+  } catch (error) {
+    clearTimeout(timeoutId);
+    renderAiTutorOfflineFallback(question, error, containerId);
+  }
+}
+
 // ----------------------------
 
 function bindEvents() {
